@@ -8,6 +8,7 @@ use App\Http\Controllers\PushNotificationController;
 // Login API (tidak perlu auth)
 Route::prefix('pelanggan/jernihnet')->group(function () {
     Route::post('/login', [AuthController::class, 'loginMem']);
+   
 });
 
 // Semua route berikut butuh auth:sanctum
@@ -23,6 +24,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Upload bukti pembayaran
     Route::post('/tagihan/{id}/upload', [CustomerTagihanController::class, 'uploadJson']);
+
+    Route::post('/pelanggan/jernihnet/logout', [AuthController::class, 'logoutMem']);
+
 });
 
 Route::get('/check-pending-notifications/{nomer_id}', [PushNotificationController::class, 'check']);

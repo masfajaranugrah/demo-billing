@@ -465,7 +465,9 @@ document.addEventListener("DOMContentLoaded", function() {
       </div>
     </div>
   </div>
-
+<a href="{{ url('/pelanggan/export') }}" class="btn btn-success">
+    Export Excel
+</a>
   {{-- ? Filter & Search Section --}}
   <div class="card mb-4">
     <div class="card-body">

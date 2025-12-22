@@ -35,6 +35,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'session.check' => \App\Http\Middleware\SessionCheck::class,
             // status aktif pelanggan (gunakan underscore untuk alias)
             'customer_status' => EnsureCustomerStatus::class,
+	    'webview.token'   => \App\Http\Middleware\CustomerTokenAuth::class,
+
 
         ]);
 

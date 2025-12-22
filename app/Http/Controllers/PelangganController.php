@@ -9,11 +9,19 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\PelangganExport;
+
 
 class PelangganController extends Controller
 {
     // index
-
+public function exportExcel()
+{
+    return Excel::download(
+        new PelangganExport,
+        'data-pelanggan.xlsx'
+    );
+}
     // public function getData()
     // {
     //     // Ambil hanya pelanggan dengan status pending

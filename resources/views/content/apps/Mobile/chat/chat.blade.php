@@ -458,11 +458,7 @@
                 <h1>Chat dengan Admin</h1>
                 <div class="user-status">
                     <span class="status-dot"></span>
-                   @php
-    $auth = Auth::user() ?? Auth::guard('customer')->user();
-@endphp
-
-<span>{{ $auth->name ?? $auth->nama_lengkap ?? 'Customer' }}</span>
+                    <span>{{ Auth::user()->name }}</span>
                 </div>
             </div>
         </div>
@@ -503,7 +499,7 @@
 
     <script>
         window.userId = "{{ auth('customer')->id() }}";
-        window.userName = "{{ $auth->name ?? $auth->nama_lengkap ?? 'Customer' }}";
+        window.userName = "{{ auth('customer')->user()->nama_lengkap}}";
         window.isAdmin = false;
 
         console.log('Chat User Initialized');

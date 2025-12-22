@@ -2,15 +2,7 @@
 $configData = Helper::appClasses();
 $customizerHidden = 'customizer-hide';
 @endphp
-@php
-use Illuminate\Support\Facades\Auth;
-// Cek apakah customer sudah login
-if (Auth::guard('customer')->check()) {
-    // Redirect langsung ke route dashboard customer
-    header("Location: " . route('customer.tagihan.home'));
-    exit;
-}
-@endphp
+
 @extends('layouts/layoutMaster')
 
 @section('title', 'Login Member')
@@ -100,46 +92,6 @@ body::after {
     }
 }
 
-/* Logo Section */
-.logo-section {
-    text-align: center;
-    padding: 48px 32px 32px;
-    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-    border-bottom: 1px solid #f1f5f9;
-}
-
-.logo-circle {
-    width: 80px;
-    height: 80px;
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-    border-radius: 20px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 20px;
-    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.2);
-}
-
-.logo-text {
-    font-size: 2rem;
-    font-weight: 800;
-    color: #ffffff;
-    letter-spacing: -0.02em;
-}
-
-.company-name {
-    font-size: 1.125rem;
-    font-weight: 700;
-    color: #0f172a;
-    margin-bottom: 4px;
-    letter-spacing: -0.01em;
-}
-
-.company-tagline {
-    font-size: 0.875rem;
-    color: #64748b;
-}
-
 /* Form Section */
 .form-section {
     padding: 40px 32px;
@@ -205,6 +157,42 @@ body::after {
     line-height: 1.5;
 }
 
+/* Toggle Button Group */
+.btn-toggle-group {
+    display: flex;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 20px;
+    background: #f8fafc;
+    border: 2px solid #e2e8f0;
+}
+
+.btn-toggle {
+    flex: 1;
+    padding: 12px 16px;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: 'Inter', sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: transparent;
+    color: #64748b;
+}
+
+.btn-toggle.active {
+    background: #0f172a;
+    color: white;
+}
+
+.btn-toggle:hover:not(.active) {
+    background: #e2e8f0;
+}
+
 /* Form Group */
 .form-group {
     margin-bottom: 24px;
@@ -231,6 +219,25 @@ body::after {
     font-size: 1.125rem;
     pointer-events: none;
     transition: color 0.2s ease;
+    z-index: 1;
+}
+
+/* Prefix untuk Nomer ID */
+.input-prefix {
+    position: absolute;
+    left: 48px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1rem;
+    font-weight: 600;
+    color: #64748b;
+    pointer-events: none;
+    z-index: 1;
+    display: none;
+}
+
+.input-prefix.active {
+    display: block;
 }
 
 .form-input {
@@ -243,6 +250,10 @@ body::after {
     border-radius: 12px;
     transition: all 0.2s ease;
     font-family: 'Inter', sans-serif;
+}
+
+.form-input.with-prefix {
+    padding-left: 80px;
 }
 
 .form-input:focus {
@@ -258,6 +269,29 @@ body::after {
 
 .form-input::placeholder {
     color: #cbd5e1;
+}
+
+/* Checkbox */
+.form-check {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.form-check-input {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    border: 2px solid #e2e8f0;
+    border-radius: 4px;
+}
+
+.form-check-label {
+    font-size: 0.875rem;
+    color: #475569;
+    cursor: pointer;
+    user-select: none;
 }
 
 /* Submit Button */
@@ -355,66 +389,10 @@ body::after {
     line-height: 1.4;
 }
 
-/* Footer */
-.auth-footer {
-    padding: 24px 32px;
-    text-align: center;
-    background: #f8fafc;
-    border-top: 1px solid #f1f5f9;
-}
-
-.footer-text {
-    font-size: 0.875rem;
-    color: #64748b;
-    margin-bottom: 8px;
-}
-
-.footer-link {
-    color: #0f172a;
-    font-weight: 600;
-    text-decoration: none;
-    transition: color 0.2s ease;
-}
-
-.footer-link:hover {
-    color: #334155;
-}
-
-.footer-links {
-    display: flex;
-    justify-content: center;
-    gap: 16px;
-    margin-top: 12px;
-}
-
-.footer-links a {
-    font-size: 0.8125rem;
-    color: #94a3b8;
-    text-decoration: none;
-    transition: color 0.2s ease;
-}
-
-.footer-links a:hover {
-    color: #64748b;
-}
-
 /* Responsive */
 @media (max-width: 576px) {
     body {
         padding: 16px;
-    }
-
-    .logo-section {
-        padding: 40px 24px 24px;
-    }
-
-    .logo-circle {
-        width: 72px;
-        height: 72px;
-    }
-
-    .logo-text {
-        font-size: 1.75rem;
     }
 
     .form-section {
@@ -424,9 +402,10 @@ body::after {
     .form-title {
         font-size: 1.375rem;
     }
-
-    .auth-footer {
-        padding: 20px 24px;
+    
+    .btn-toggle {
+        font-size: 0.8125rem;
+        padding: 10px 12px;
     }
 }
 </style>
@@ -440,22 +419,89 @@ body::after {
 ])
 @endsection
 
-
 @section('page-script')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('formAuthentication');
     const submitBtn = form.querySelector('.btn-submit');
-    const input = document.getElementById('no_whatsapp');
+    const input = document.getElementById('login_input');
+    const inputLabel = document.getElementById('inputLabel');
+    const inputIcon = document.getElementById('inputIcon');
+    const inputPrefix = document.getElementById('inputPrefix');
+    const helpText = document.getElementById('helpText');
     const rememberCheckbox = document.getElementById('remember');
+    
+    const btnWhatsApp = document.getElementById('btnWhatsApp');
+    const btnNomerId = document.getElementById('btnNomerId');
+    
+    let currentMethod = 'whatsapp'; // default
 
-    // Prefill dari localStorage kalau sebelumnya disimpan
-    const savedPhone = localStorage.getItem('customer_phone');
-    const savedRemember = localStorage.getItem('remember_whatsapp');
+    // Cek data tersimpan di localStorage
+    const savedInput = localStorage.getItem('customer_login_input');
+    const savedMethod = localStorage.getItem('customer_login_method');
+    const savedRemember = localStorage.getItem('remember_login');
 
-    if (savedRemember === 'true' && savedPhone) {
-        input.value = savedPhone;
+    // Jika ada data tersimpan, auto-fill form
+    if (savedRemember === 'true' && savedInput && savedMethod) {
+        currentMethod = savedMethod;
+        
+        // Set metode yang sesuai
+        if (savedMethod === 'nomer_id') {
+            toggleButtons(btnNomerId, btnWhatsApp);
+            updateUI('nomer_id', false);
+
+            // Tampilkan value tanpa prefix JMK untuk user experience
+            const displayValue = savedInput.replace(/^JMK/i, '');
+            input.value = displayValue;
+        } else {
+            toggleButtons(btnWhatsApp, btnNomerId);
+            updateUI('whatsapp', false);
+            input.value = savedInput;
+        }
+        
         rememberCheckbox.checked = true;
+    }
+
+    // Toggle antara WhatsApp dan Nomer ID
+    btnWhatsApp.addEventListener('click', function() {
+        currentMethod = 'whatsapp';
+        updateUI('whatsapp', true);
+        toggleButtons(btnWhatsApp, btnNomerId);
+    });
+
+    btnNomerId.addEventListener('click', function() {
+        currentMethod = 'nomer_id';
+        updateUI('nomer_id', true);
+        toggleButtons(btnNomerId, btnWhatsApp);
+    });
+
+    function toggleButtons(activeBtn, inactiveBtn) {
+        activeBtn.classList.add('active');
+        inactiveBtn.classList.remove('active');
+    }
+
+    function updateUI(method, clearInput = true) {
+        if (method === 'whatsapp') {
+            inputLabel.textContent = 'Nomor WhatsApp';
+            input.placeholder = '08123456789 atau 628123456789';
+            inputIcon.className = 'bi bi-whatsapp input-icon';
+            inputPrefix.classList.remove('active');
+            input.classList.remove('with-prefix');
+            helpText.textContent = 'Gunakan nomor WhatsApp yang terdaftar pada sistem kami. Format: 08xxx atau 628xxx';
+        } else {
+            inputLabel.textContent = 'Nomer ID Pelanggan';
+            input.placeholder = 'GK1111 atau 1111';
+            inputIcon.className = 'bi bi-person-badge input-icon';
+            inputPrefix.classList.add('active');
+            input.classList.add('with-prefix');
+            helpText.textContent = 'Prefix "JMK" akan ditambahkan otomatis. Contoh input: GK1111 atau 1111';
+        }
+        
+        if (clearInput) {
+            input.value = '';
+        }
+        
+        input.focus();
     }
 
     // Auto focus
@@ -463,21 +509,35 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Form submission
     form.addEventListener('submit', function(e) {
-        const whatsapp = input.value.trim();
+        let loginInput = input.value.trim();
 
-        if (!whatsapp) {
+        if (!loginInput) {
             e.preventDefault();
-            showAlert('Nomor WhatsApp tidak boleh kosong');
+            showAlert('Input tidak boleh kosong');
             return;
+        }
+
+        // Jika metode Nomer ID, tambahkan prefix JMK jika belum ada
+        if (currentMethod === 'nomer_id') {
+            // Jika belum diawali JMK, baru tambahkan
+            if (!/^JMK/i.test(loginInput)) {
+                loginInput = 'JMK' + loginInput;
+            }
+
+            // Update input value dengan prefix lengkap
+            // Bagian setelah JMK disimpan apa adanya (.12345, 12345, dst)
+            input.value = loginInput;
         }
 
         // Simpan / hapus ke/dari localStorage sesuai checkbox
         if (rememberCheckbox.checked) {
-            localStorage.setItem('customer_phone', whatsapp);
-            localStorage.setItem('remember_whatsapp', 'true');
+            localStorage.setItem('customer_login_input', loginInput);
+            localStorage.setItem('customer_login_method', currentMethod);
+            localStorage.setItem('remember_login', 'true');
         } else {
-            localStorage.removeItem('customer_phone');
-            localStorage.removeItem('remember_whatsapp');
+            localStorage.removeItem('customer_login_input');
+            localStorage.removeItem('customer_login_method');
+            localStorage.removeItem('remember_login');
         }
 
         // Show loading state
@@ -507,20 +567,13 @@ document.addEventListener('DOMContentLoaded', function() {
         const formSection = document.querySelector('.form-section form');
         formSection.insertBefore(alertDiv, formSection.firstChild);
     }
-
-    // Debug (opsional - bisa dihapus di production)
-    console.log('?? Saved phone:', savedPhone);
-    console.log('? Remember:', savedRemember);
 });
 </script>
 @endsection
 
-
 @section('content')
 <div class="auth-container">
     <div class="auth-card">
-
-
         <!-- Form Section -->
         <div class="form-section">
             <div class="form-header">
@@ -538,47 +591,69 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
                 @endif
 
+                @if($errors->has('login_input'))
+                <div class="alert alert-error">
+                    <i class="bi bi-exclamation-circle alert-icon"></i>
+                    <div class="alert-content">{{ $errors->first('login_input') }}</div>
+                </div>
+                @endif
+
+                <!-- Toggle Login Method -->
                 <div class="form-group">
-                    <label for="no_whatsapp" class="form-label">Nomor WhatsApp</label>
+                    <label class="form-label">Pilih Metode Login</label>
+                    <div class="btn-toggle-group">
+                        <button type="button" class="btn-toggle active" id="btnWhatsApp">
+                            <i class="bi bi-whatsapp"></i> WhatsApp
+                        </button>
+                        <button type="button" class="btn-toggle" id="btnNomerId">
+                            <i class="bi bi-person-badge"></i> Nomer ID
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Input Field -->
+                <div class="form-group">
+                    <label for="login_input" class="form-label" id="inputLabel">Nomor WhatsApp</label>
                     <div class="input-wrapper">
                         <input
                             type="text"
                             class="form-input"
-                            id="no_whatsapp"
-                            name="no_whatsapp"
-                            placeholder="08123456789"
+                            id="login_input"
+                            name="login_input"
+                            placeholder="08123456789 atau 628123456789"
                             autofocus
                             required>
-                        <i class="bi bi-phone input-icon"></i>
+                        <i class="bi bi-whatsapp input-icon" id="inputIcon"></i>
+                        <span class="input-prefix" id="inputPrefix">JMK</span>
                     </div>
                 </div>
-   <!-- Checkbox Remember Me -->
-    <div class="form-check mb-3">
-        <input type="checkbox" class="form-check-input" id="remember" name="remember">
-        <label class="form-check-label" for="remember">
-            Ingat Saya
-        </label>
-    </div>
-                    <button class="btn-submit" type="submit">
+
+                <!-- Checkbox Remember Me -->
+                <div class="form-check">
+                    <input type="checkbox" class="form-check-input" id="remember" name="remember">
+                    <label class="form-check-label" for="remember">
+                        Ingat Saya
+                    </label>
+                </div>
+
+                <!-- Submit Button -->
+                <button class="btn-submit" type="submit">
                     <i class="bi bi-box-arrow-in-right btn-icon"></i>
                     Masuk
                 </button>
 
+                <!-- Help Box -->
                 <div class="help-box">
                     <div class="help-icon">
                         <i class="bi bi-lightbulb"></i>
                     </div>
                     <div class="help-content">
                         <div class="help-title">Tips Login</div>
-                        <div class="help-text">Gunakan nomor WhatsApp yang terdaftar pada sistem kami tanpa tanda (+) atau spasi</div>
+                        <div class="help-text" id="helpText">Gunakan nomor WhatsApp yang terdaftar pada sistem kami. Format: 08xxx atau 628xxx</div>
                     </div>
                 </div>
             </form>
         </div>
-
-
     </div>
 </div>
-
-
 @endsection

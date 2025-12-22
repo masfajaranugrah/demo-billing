@@ -133,43 +133,6 @@
                 }
             }
         },
-        "/api/pelanggan/jernihnet/logout": {
-            "post": {
-                "tags": [
-                    "Login & Logout"
-                ],
-                "summary": "Logout pelanggan",
-                "description": "Hapus token pelanggan saat ini",
-                "operationId": "14954ba00dd72603bb46b52c3e550293",
-                "responses": {
-                    "200": {
-                        "description": "Logout berhasil",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "status": {
-                                            "type": "string",
-                                            "example": "success"
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Logout berhasil"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "sanctum": []
-                    }
-                ]
-            }
-        },
         "/dashboard/customer/tagihan": {
             "get": {
                 "tags": [

@@ -9,47 +9,43 @@ use Laravel\Sanctum\PersonalAccessToken;
 
 class CustomerTokenAuth
 {
-    /**
-     * Handle an incoming request.
-     * Autentikasi menggunakan token dari query parameter, header, atau session
-     */
     public function handle(Request $request, Closure $next)
     {
-        // 1. Cek apakah sudah login via session (untuk akses web biasa)
+        // 1. Jika sudah login via guard 'customer', lanjut
         if (Auth::guard('customer')->check()) {
             return $next($request);
         }
 
-        // 2. Cek token dari query parameter (?token=xxx)
-        $token = $request->query('token');
+        // 2. Ambil token dari query (?token=xxx) atau bearer
+        $token = $request->query('token') ?: $request->bearerToken();
 
-        // 3. Jika tidak ada di query, cek di header Authorization
-        if (!$token && $request->bearerToken()) {
-            $token = $request->bearerToken();
-        }
-
-        // 4. Jika ada token, validasi dan login
+        // 3. Jika token ada, validasi via Sanctum
         if ($token) {
             $tokenModel = PersonalAccessToken::findToken($token);
 
-            if ($tokenModel && $tokenModel->tokenable_type === 'App\Models\Pelanggan') {
+            // Pastikan token milik model Pelanggan
+            if ($tokenModel && $tokenModel->tokenable_type === \App\Models\Pelanggan::class) {
                 $pelanggan = $tokenModel->tokenable;
 
-                // Login pelanggan via guard customer untuk request ini
+                // Set user ke guard 'customer' untuk request ini
                 Auth::guard('customer')->setUser($pelanggan);
 
                 return $next($request);
             }
         }
 
-        // 5. Jika tidak ada token atau token invalid, redirect ke login
+        // 4. Jika token tidak ada / invalid -> 401 (tidak redirect)
+        $responseBody = [
+            'success' => false,
+            'message' => 'Unauthorized. Token tidak valid atau tidak ditemukan.',
+        ];
+
+        // Kalau permintaan expect JSON (misal dari mobile app)
         if ($request->expectsJson()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthorized. Token tidak valid atau tidak ditemukan.',
-            ], 401);
+            return response()->json($responseBody, 401);
         }
 
-        return redirect()->route('login')->with('warning', 'Silakan login terlebih dahulu.');
+        // Untuk request biasa (webview HTML), tetap balas JSON 401
+        return response()->json($responseBody, 401);
     }
 }

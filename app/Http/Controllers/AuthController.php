@@ -49,32 +49,42 @@ class AuthController extends Controller
 public function loginMem(Request $request)
 {
     $request->validate([
-        'no_whatsapp' => 'required|string',
+        'login_input' => 'required|string',
     ]);
 
-    // Normalisasi nomor telepon
-    $inputPhone = trim($request->no_whatsapp);
-    $inputPhone = preg_replace('/[^0-9]/', '', $inputPhone);
-
-    // Buat variasi format
-    $phoneVariations = [];
-    if (substr($inputPhone, 0, 1) === '0') {
-        $phoneVariations[] = $inputPhone;
-        $phoneVariations[] = '62' . substr($inputPhone, 1);
-    } elseif (substr($inputPhone, 0, 2) === '62') {
-        $phoneVariations[] = $inputPhone;
-        $phoneVariations[] = '0' . substr($inputPhone, 2);
-    } elseif (substr($inputPhone, 0, 1) === '8') {
-        $phoneVariations[] = '0' . $inputPhone;
-        $phoneVariations[] = '62' . $inputPhone;
+    $input = trim($request->login_input);
+    
+    // Cek apakah input adalah nomor (WhatsApp) atau alphanumeric (Nomer ID)
+    if (preg_match('/^[0-9]+$/', $input)) {
+        // Input adalah nomor telepon
+        $inputPhone = preg_replace('/[^0-9]/', '', $input);
+        
+        // Buat variasi format nomor telepon
+        $phoneVariations = [];
+        if (substr($inputPhone, 0, 1) === '0') {
+            $phoneVariations[] = $inputPhone;
+            $phoneVariations[] = '62' . substr($inputPhone, 1);
+        } elseif (substr($inputPhone, 0, 2) === '62') {
+            $phoneVariations[] = $inputPhone;
+            $phoneVariations[] = '0' . substr($inputPhone, 2);
+        } elseif (substr($inputPhone, 0, 1) === '8') {
+            $phoneVariations[] = '0' . $inputPhone;
+            $phoneVariations[] = '62' . $inputPhone;
+        } else {
+            $phoneVariations[] = $inputPhone;
+        }
+        
+        // Cari berdasarkan nomor WhatsApp
+        $pelanggan = Pelanggan::whereIn('no_whatsapp', $phoneVariations)->first();
+        
+    } else {
+        // Input adalah Nomer ID (alphanumeric)
+        $pelanggan = Pelanggan::where('nomer_id', $input)->first();
     }
-
-    // Cari pelanggan
-    $pelanggan = Pelanggan::whereIn('no_whatsapp', $phoneVariations)->first();
 
     if (!$pelanggan) {
         return back()->withErrors([
-            'no_whatsapp' => 'Nomor WhatsApp tidak terdaftar.',
+            'login_input' => 'Nomor WhatsApp atau Nomer ID tidak terdaftar.',
         ])->withInput();
     }
 
@@ -101,7 +111,6 @@ public function loginMem(Request $request)
     return redirect()->route('customer.tagihan.home')
         ->with('success', 'Login berhasil!');
 }
-
 
 
 
@@ -197,7 +206,7 @@ public function loginMem(Request $request)
             ->withErrors(['email' => 'Email atau password salah']);
     }
 
-    // Logout
+    // Logout 
     public function logout(Request $request)
     {
         Auth::logout();

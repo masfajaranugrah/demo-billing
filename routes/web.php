@@ -2,10 +2,11 @@
 
 
  use Illuminate\Support\Facades\Redis;
+use App\Http\Controllers\WebviewKwitansiController;
 
 
 use App\Http\Controllers\MarketingController;
-
+use App\Http\Controllers\MobileTagihanController;
 
 use App\Http\Controllers\RekeningController;
 use App\Http\Controllers\AbsensiController;
@@ -81,10 +82,24 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 Route::post('/customer/logout', [AuthController::class, 'logoutCustomer'])->name('customer.logout');
 
 // auth pelanggan
-Route::prefix('/pelanggan/jernihnet')->group(function () {
-    Route::get('/login', [AuthController::class, 'loginMember'])->name('users.member')->middleware('guest:customer'); // tambahkan semua guard yang ingin dicek
+ 
 
-    Route::post('/login', [AuthController::class, 'loginMem'])->name('login.member.post');
+Route::prefix('/pelanggan/jernihnet')->group(function () {
+
+    // HANYA boleh diakses kalau BELUM login sebagai customer
+    Route::middleware('guest:customer')->group(function () {
+        Route::get('/login', [AuthController::class, 'loginMember'])
+            ->name('users.member');
+
+        Route::post('/login', [AuthController::class, 'loginMem'])
+            ->name('login.member.post');
+    });
+
+    // Route yang sudah login customer
+    Route::middleware('auth:customer')->group(function () {
+        Route::get('/dashboard/tagihan', [TagihanController::class, 'index'])
+            ->name('customer.tagihan.home');
+    });
 });
 // layout
 Route::get('/layouts/collapsed-menu', [CollapsedMenu::class, 'index'])->name('layouts-collapsed-menu');
@@ -123,7 +138,7 @@ Route::middleware(['auth', 'role:administrator,admin'])->group(function () {
     });
 
     Route::prefix('/dashboard/admin/tagihan')->group(function () {
-        Route::get('/', [TagihanController::class, 'index'])->name('tagihan.index');
+        Route::get('/', [TagihanController::class, 'index'])->name('tagihan.get');
         Route::get('/lunas', [TagihanController::class, 'lunas'])->name('tagihan.lunas');
         Route::get('/proses', [TagihanController::class, 'proses'])->name('tagihan.proses');
         Route::get('/add/tagihan', [TagihanController::class, 'indexAddTagihan'])->name('tagihan.add');
@@ -160,7 +175,7 @@ Route::middleware(['auth', 'role:admin,administrator'])->group(function () {
         Route::get('/', [PelangganController::class, 'index'])->name('pelanggan');
         Route::get('/status', [PelangganController::class, 'status'])->name('pelanggan.status.active');
         Route::get('upload/data', [PelangganController::class, 'upload'])->name('pelanggan.data');
-        Route::get('/status/data', [PelangganController::class, 'getDataAprove'])->name('pelanggan.data');
+        Route::get('/status/data', [PelangganController::class, 'getDataAprove'])->name('pelanggan.status.data');
         Route::get('/create', [PelangganController::class, 'create'])->name('add-pelanggan');
         Route::post('/store', [PelangganController::class, 'store'])->name('pelanggan.store');
         Route::get('/edit/{id}', [PelangganController::class, 'edit'])->name('pelanggan.edit');
@@ -179,7 +194,7 @@ Route::middleware(['auth', 'role:admin,administrator'])->group(function () {
         Route::get('/edit/{user}', [TeamController::class, 'edit'])->name('users.edit'); // edit user
         Route::put('/update/{user}', [TeamController::class, 'update'])->name('users.update'); // update user
         Route::delete('/delete/{user}', [TeamController::class, 'destroy'])->name('users.destroy'); // hapus user
-        Route::get('/{id}/edit', [TeamController::class, 'edit'])->name('users.edit');
+        Route::get('/{id}/edit', [TeamController::class, 'edit'])->name('users.show.edit');
         Route::put('/{id}', [TeamController::class, 'update'])->name('users.update');
 
     });
@@ -269,7 +284,7 @@ Route::prefix('dashboard/admin/pembukuan')->group(function () {
 Route::middleware(['auth', 'role:karyawan'])->group(function () {
     Route::get('/dashboard/karyawan/absensi', [AbsensiController::class, 'index'])->name('absensi.index');
     Route::get('/dashboard/karyawan/data/absensi', [AbsensiController::class, 'getAll'])->name('absensi.indexAll');
-    Route::post('/absensi/submit', [AbsensiController::class, 'submit'])->name('absensi.submit');
+    Route::post('/absensi/submit', [AbsensiController::class, 'submit'])->name('absensi.kirim');
 
     Route::post('/absensi/check-out', [AbsensiController::class, 'checkOut'])->name('absensi.checkout');
 });
@@ -278,11 +293,11 @@ Route::middleware(['auth', 'role:karyawan'])->group(function () {
      Route::get('/', [TeamController::class, 'index'])->name('users.index'); // list users
      Route::get('/create', [TeamController::class, 'create'])->name('users.create'); // form add user
      Route::post('/store', [TeamController::class, 'register'])->name('users.store'); // simpan user baru
-     Route::get('/edit/{user}', [TeamController::class, 'edit'])->name('users.edit'); // edit user
+     Route::get('/edit/{user}', [TeamController::class, 'edit'])->name('users.get.edit'); // edit user
 //     Route::put('/update/{user}', [TeamController::class, 'update'])->name('users.update'); // update user
 //     Route::delete('/delete/{user}', [TeamController::class, 'destroy'])->name('users.destroy'); // hapus user
      Route::get('/{id}/edit', [TeamController::class, 'edit'])->name('users.edit');
-     Route::put('/{id}', [TeamController::class, 'update'])->name('users.update');
+     Route::put('/{id}', [TeamController::class, 'update'])->name('users.edit.data');
 
  });
 
@@ -471,7 +486,7 @@ Route::middleware(['auth'])->group(function () {
 
     // ?? Halaman absensi user (check-in / check-out)
     Route::get('dashboard/admin/absensi', [AbsensiController::class, 'index'])
-        ->name('absensi.index');
+        ->name('absensi');
 
     // ?? Submit absensi (checkin, checkout, lembur)
     Route::post('dashboard/admin/absensi/submit', [AbsensiController::class, 'submit'])
@@ -574,8 +589,25 @@ Route::get('/test-redis', function () {
         return "Redis Error: " . $e->getMessage();
     }
 });
+ 
+Route::prefix('mobile/customer')->middleware(['webview.token'])
+    ->group(function () {
+        Route::get('/tagihan', [MobileTagihanController::class, 'index'])->name('mobile.tagihan.index');
+        Route::get('/tagihan/home', [MobileTagihanController::class, 'indexHome'])->name('mobile.tagihan.home');
+        Route::get('/tagihan/kwitansi', [MobileTagihanController::class, 'selesai'])->name('mobile.tagihan.selesai');
+        Route::get('/tagihan/summary', [MobileTagihanController::class, 'summaryJson']);
+        Route::get('/tagihan/{id}', [MobileTagihanController::class, 'show'])->name('mobile.tagihan.show');
+        Route::get('/kwitansi', [WebviewKwitansiController::class, 'index'])->name('webview.kwitansi.index');
+        Route::get('/kwitansi/{id}/preview', [WebviewKwitansiController::class, 'preview'])->name('webview.kwitansi.preview');
+        Route::get('/kwitansi/{id}/download', [WebviewKwitansiController::class, 'download'])->name('webview.kwitansi.download');
+        Route::get('/chat', [ChatController::class, 'user'])->name('customer.chat');     
+        Route::get('/pelanggan/chat', [ChatController::class, 'pelanggan'])->name('chat.pelanggan');
+    Route::get('/chat/messages/{userId?}', [ChatController::class, 'getMessages'])->name('chat.messages');
+    Route::post('/chat/send', [ChatController::class, 'send'])->name('chat.send');
+    Route::get('/chat/users', [ChatController::class, 'getUserList'])->name('chat.users');
+    Route::post('/chat/mark-read/{userId}', [ChatController::class, 'markRead'])->name('chat.markRead');
+    Route::get('/chat/unread-count', [ChatController::class, 'getUnreadCount'])->name('chat.unreadCount');
 
+});
 
-  
-
-
+Route::get('/pelanggan/export', [PelangganController::class, 'exportExcel']);

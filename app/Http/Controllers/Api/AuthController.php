@@ -80,38 +80,43 @@ class AuthController extends Controller
      *     )
      * )
      */
-      public function loginMem(Request $request)
+public function loginMem(Request $request)
 {
-    // Normalisasi nomor telepon: 08xxxx ? 628xxxx
-    $no = $request->no_whatsapp;
-
-    if (substr($no, 0, 1) === '0') {
-        $no = '62' . substr($no, 1);
-    }
-
-    // Masukkan kembali ke request agar validasi pakai versi yang sudah dinormalisasi
-    $request->merge([
-        'no_whatsapp' => $no
-    ]);
-
-    // Validasi
-    $validator = Validator::make($request->all(), [
-        'no_whatsapp' => 'required|string|exists:pelanggans,no_whatsapp',
+    $request->validate([
+        'no_whatsapp' => 'required|string',
     ], [
         'no_whatsapp.required' => 'Nomor WhatsApp wajib diisi.',
-        'no_whatsapp.exists' => 'Nomor WhatsApp tidak terdaftar.',
     ]);
 
-    if ($validator->fails()) {
-        return response()->json([
-            'status' => 'error',
-            'message' => 'Validasi gagal',
-            'errors' => $validator->errors(),
-        ], 422);
+    $input = preg_replace('/[^0-9]/', '', $request->no_whatsapp);
+
+    // Buat variasi nomor
+    $numbers = [];
+
+    if (str_starts_with($input, '0')) {
+        $numbers[] = $input;
+        $numbers[] = '62' . substr($input, 1);
+    } elseif (str_starts_with($input, '62')) {
+        $numbers[] = $input;
+        $numbers[] = '0' . substr($input, 2);
+    } elseif (str_starts_with($input, '8')) {
+        $numbers[] = '0' . $input;
+        $numbers[] = '62' . $input;
+    } else {
+        $numbers[] = $input;
     }
 
-    // Login
-    $pelanggan = Pelanggan::where('no_whatsapp', $request->no_whatsapp)->first();
+    // Cari pelanggan
+    $pelanggan = Pelanggan::whereIn('no_whatsapp', $numbers)->first();
+
+    if (!$pelanggan) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Nomor WhatsApp tidak terdaftar.',
+        ], 404);
+    }
+
+    // Login & token
     $token = $pelanggan->createToken('pelanggan_token')->plainTextToken;
 
     return response()->json([
@@ -129,6 +134,7 @@ class AuthController extends Controller
         ],
     ], 200);
 }
+
 
     /**
      * Logout Pelanggan (Flutter)
@@ -152,15 +158,7 @@ class AuthController extends Controller
      *     )
      * )
      */
-    public function logoutMem(Request $request)
-    {
-        $request->user()->currentAccessToken()->delete();
-
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Logout berhasil',
-        ], 200);
-    }
+ 
 
     /**
      * Tampilkan halaman tagihan pelanggan
@@ -275,4 +273,35 @@ class AuthController extends Controller
 
         return view('content.apps.Customer.tagihan.lunas-tagihan', compact('tagihans'));
     }
+
+
+public function logoutMem(Request $request)
+{
+    // Cek apakah user terautentikasi
+    if (!$request->user()) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'User tidak terautentikasi',
+        ], 401);
+    }
+
+    // Cek apakah ada token
+    $token = $request->user()->currentAccessToken();
+    
+    if (!$token) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Token tidak ditemukan',
+        ], 401);
+    }
+
+    // Hapus token
+    $token->delete();
+
+    return response()->json([
+        'status' => 'success',
+        'message' => 'Logout berhasil',
+    ], 200);
+}
+
 }

@@ -31,6 +31,13 @@
           "roles": ["administrator", "admin"],
           "icon": "ri-check-double-line"
         },
+          {
+          "url": "/dashboard/admin/tagihan/ostanding",
+          "name": "Oustanding Tagihan",
+          "slug": "app-user-list",
+          "roles": ["administrator", "admin"],
+          "icon": "ri-check-double-line"
+        },
         {
           "url": "/tagihan/push-notification",
           "name": "Push Notification",

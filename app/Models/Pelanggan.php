@@ -94,15 +94,14 @@ class Pelanggan extends Authenticatable
     /**
      * ?? Scope untuk filter status pelanggan
      */
-    public function scopeStatus($query, $status)
-    {
-        if (! empty($status)) {
-            return $query->where('status', $status);
-        }
-
-        return $query;
+ public function scopeFilterStatus($query, $status)
+{
+    if (! empty($status)) {
+        return $query->where('status', $status);
     }
 
+    return $query;
+}
     /**
      * ?? Scope pencarian global
      */

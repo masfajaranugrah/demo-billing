@@ -552,11 +552,11 @@
                 <div class="user-item" data-user-id="{{ $user['id'] }}" data-user-name="{{ $user['name'] }}">
                     <div class="user-item-content">
                         <div class="user-avatar">
-                            {{ strtoupper(substr($user['name'], 0, 1)) }}
+                            {{ strtoupper(substr($user['name'], 0, 1)) }} 
                         </div>
                         <div class="user-details">
                             <div class="user-name">{{ $user['name'] }}</div>
-                            <div class="user-type">{{ ucfirst($user['type']) }}</div>
+                            <div class="user-type">{{ ($user['nomer_id']) }}</div>
                         </div>
                         <span class="unread-badge" id="unread-{{ $user['id'] }}" style="display: none;">0</span>
                     </div>
@@ -624,11 +624,7 @@
     window.userName = "{{ Auth::user()->name }}";
     window.isAdmin = true;
     window.selectedUserId = null;
-    
-    console.log('Chat Admin Initialized');
-    console.log('User ID:', window.userId);
-    console.log('User Name:', window.userName);
-    console.log('Is Admin:', window.isAdmin);
+ 
 </script>
 @vite(['resources/js/chat.js'])
 @endsection

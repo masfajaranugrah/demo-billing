@@ -66,6 +66,7 @@ class ChatController extends Controller
                 return [
                     'id' => $user->id,
                     'name' => $user->name,
+		    'nomer_id' => $user->nomer_id,
                     'type' => 'user',
                     'created_at' => $user->created_at,
                 ];
@@ -78,6 +79,7 @@ class ChatController extends Controller
                 return [
                     'id' => $pelanggan->id,
                     'name' => $pelanggan->nama_lengkap ?? 'Pelanggan',
+		    'nomer_id' => $pelanggan->nomer_id,
                     'type' => 'pelanggan',
                     'created_at' => $pelanggan->created_at,
                 ];
@@ -177,6 +179,7 @@ class ChatController extends Controller
             ->map(function($user) {
                 return [
                     'id' => $user->id,
+		    'nomer_id' => $user->nomer_id,
                     'name' => $user->name,
                     'type' => 'user',
                 ];
@@ -186,6 +189,9 @@ class ChatController extends Controller
             return [
                 'id' => $pelanggan->id,
                 'name' => $pelanggan->nama_lengkap ?? 'Pelanggan',
+		
+                'nomer_id' => $pelanggan->nomer_id ?? 'Pelanggan',
+
                 'type' => 'pelanggan',
             ];
         });

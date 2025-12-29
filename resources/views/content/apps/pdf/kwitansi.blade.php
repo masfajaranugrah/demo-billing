@@ -260,7 +260,7 @@ if(!empty($tagihan->tanggal_berakhir)) {
         <tr> 
           <td>Untuk Pembayaran</td>
           <td>:</td>
-          <td><strong>Tagihan pembayaran bulan {{ $bulanTahun }}</strong></td>
+          <td><strong>Tagihan pembayaran bulan Desember 2025</strong></td>
         </tr>
       </table>
 

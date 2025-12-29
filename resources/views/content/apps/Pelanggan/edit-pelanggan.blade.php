@@ -134,6 +134,63 @@
     font-weight: 600;
     color: #5a5f7d;
   }
+
+  /* ? SELECT2 CUSTOM STYLING */
+  .select2-container--default .select2-selection--single {
+    border-radius: 8px;
+    border: 1.5px solid #e8e8e8;
+    padding: 0.5rem 1rem;
+    height: auto;
+    min-height: 48px;
+    transition: all 0.3s;
+  }
+  .select2-container--default .select2-selection--single:focus,
+  .select2-container--default.select2-container--focus .select2-selection--single {
+    border-color: #696cff;
+    box-shadow: 0 0 0 0.2rem rgba(105, 108, 255, 0.15);
+    outline: none;
+  }
+  .select2-container--default .select2-selection--single .select2-selection__rendered {
+    color: #5a5f7d;
+    line-height: 30px;
+    padding-left: 0;
+    font-size: 0.9375rem;
+  }
+  .select2-container--default .select2-selection--single .select2-selection__placeholder {
+    color: #a8afc7;
+    font-size: 0.875rem;
+  }
+  .select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 46px;
+    right: 10px;
+  }
+  .select2-dropdown {
+    border: 1.5px solid #e8e8e8;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+  .select2-container--default .select2-results__option--highlighted[aria-selected] {
+    background-color: #696cff;
+  }
+  .select2-container--default .select2-search--dropdown .select2-search__field {
+    border: 1.5px solid #e8e8e8;
+    border-radius: 6px;
+    padding: 0.5rem 1rem;
+    font-size: 0.9375rem;
+  }
+  .select2-container--default .select2-search--dropdown .select2-search__field:focus {
+    border-color: #696cff;
+    outline: none;
+  }
+  .select2-results__option {
+    padding: 0.75rem 1rem;
+    font-size: 0.9375rem;
+  }
+  .select2-container--default .select2-results__option[aria-selected=true] {
+    background-color: #f8f9ff;
+    color: #696cff;
+    font-weight: 600;
+  }
 </style>
 @endsection
 
@@ -149,13 +206,69 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
 
-    const paketSelect = document.getElementById('paket_id');
+    const paketData = @json($paket);
+    let manualOverride = false;
+
+    // ? INISIALISASI SELECT2 UNTUK PAKET
+    $('#paket_id').select2({
+        placeholder: '?? Cari paket berdasarkan nama atau kecepatan...',
+        allowClear: true,
+        width: '100%',
+        language: {
+            noResults: function() {
+                return "Paket tidak ditemukan";
+            },
+            searching: function() {
+                return "Mencari paket...";
+            }
+        },
+        templateResult: formatPaket,
+        templateSelection: formatPaketSelection
+    });
+
+    // ? FORMAT TAMPILAN OPSI PAKET DI DROPDOWN
+    function formatPaket(paket) {
+        if (!paket.id) {
+            return paket.text;
+        }
+
+        const selectedPaket = paketData.find(p => p.id == paket.id);
+        if (!selectedPaket) return paket.text;
+
+        const hargaFormatted = new Intl.NumberFormat('id-ID', {
+            style: 'currency',
+            currency: 'IDR',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        }).format(selectedPaket.harga);
+
+        const $paket = $(
+            '<div class="select2-paket-option">' +
+                '<div style="font-weight: 600; color: #5a5f7d; margin-bottom: 2px;">' +
+                    '<i class="ri-wifi-line" style="color: #696cff; margin-right: 6px;"></i>' +
+                    paket.text +
+                '</div>' +
+                
+            '</div>'
+        );
+        return $paket;
+    }
+
+    // ? FORMAT TAMPILAN PAKET YANG DIPILIH
+    function formatPaketSelection(paket) {
+        if (!paket.id) {
+            return paket.text;
+        }
+        const selectedPaket = paketData.find(p => p.id == paket.id);
+        if (!selectedPaket) return paket.text;
+
+        return paket.text + ' - ' + selectedPaket.kecepatan + ' Mbps';
+    }
+
     const hargaDisplay = document.getElementById('harga_display');
     const masaDisplay = document.getElementById('masa_display');
     const tanggalMulai = document.getElementById('tanggal_mulai');
     const tanggalBerakhir = document.getElementById('tanggal_berakhir');
-    const paketData = @json($paket);
-    let manualOverride = false;
 
     // Set nilai awal dari database
     tanggalMulai.value = "{{ old('tanggal_mulai', $pelanggan->tanggal_mulai) }}";
@@ -166,7 +279,8 @@ document.addEventListener('DOMContentLoaded', function () {
         dateFormat: 'Y-m-d',
         defaultDate: tanggalMulai.value,
         onChange: function(selectedDates, dateStr) {
-            const selected = paketData.find(p => p.id == paketSelect.value);
+            const paketId = $('#paket_id').val();
+            const selected = paketData.find(p => p.id == paketId);
             if(selected && !manualOverride){
                 updateTanggalBerakhir(selected.masa_pembayaran);
             }
@@ -200,27 +314,44 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // Tampilkan harga & masa aktif paket saat load page
-    const initialPaket = paketData.find(p => p.id == "{{ old('paket_id', $pelanggan->paket_id) }}");
+    const initialPaketId = "{{ old('paket_id', $pelanggan->paket_id) }}";
+    const initialPaket = paketData.find(p => p.id == initialPaketId);
     if(initialPaket){
-        hargaDisplay.textContent = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(initialPaket.harga);
+        hargaDisplay.textContent = new Intl.NumberFormat('id-ID', {
+            style: 'currency',
+            currency: 'IDR',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        }).format(initialPaket.harga);
         masaDisplay.textContent = `${initialPaket.masa_pembayaran} Hari`;
-        paketSelect.value = initialPaket.id;
+        $('#paket_id').val(initialPaket.id).trigger('change');
     }
 
-    // Event pilih paket
-    paketSelect.addEventListener('change', () => {
-        const selected = paketData.find(p => p.id == paketSelect.value);
+    // ? EVENT PILIH PAKET (GUNAKAN SELECT2 EVENT)
+    $('#paket_id').on('select2:select', function (e) {
+        const paketId = e.params.data.id;
+        const selected = paketData.find(p => p.id == paketId);
+
         if(selected){
-            hargaDisplay.textContent = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(selected.harga);
+            hargaDisplay.textContent = new Intl.NumberFormat('id-ID', {
+                style: 'currency',
+                currency: 'IDR',
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            }).format(selected.harga);
             masaDisplay.textContent = `${selected.masa_pembayaran} Hari`;
+
             if(!manualOverride){
                 updateTanggalBerakhir(selected.masa_pembayaran);
             }
-        } else {
-            hargaDisplay.textContent = '-';
-            masaDisplay.textContent = '-';
-            if(!manualOverride) tanggalBerakhir._flatpickr.clear();
         }
+    });
+
+    // ? HANDLE CLEAR SELECT2
+    $('#paket_id').on('select2:clear', function (e) {
+        hargaDisplay.textContent = '-';
+        masaDisplay.textContent = '-';
+        if(!manualOverride) tanggalBerakhir._flatpickr.clear();
     });
 
     // Preview foto KTP
@@ -287,11 +418,11 @@ document.addEventListener('DOMContentLoaded', function () {
                         <label for="nama_lengkap" class="form-label">
                             <i class="ri-user-3-line"></i>Nama Lengkap
                         </label>
-                        <input 
-                            type="text" 
-                            class="form-control @error('nama_lengkap') is-invalid @enderror" 
-                            id="nama_lengkap" 
-                            name="nama_lengkap" 
+                        <input
+                            type="text"
+                            class="form-control @error('nama_lengkap') is-invalid @enderror"
+                            id="nama_lengkap"
+                            name="nama_lengkap"
                             placeholder="Masukkan nama lengkap pelanggan"
                             value="{{ old('nama_lengkap', $pelanggan->nama_lengkap) }}"
                             required>
@@ -301,16 +432,16 @@ document.addEventListener('DOMContentLoaded', function () {
                     </div>
 
                     <!-- No KTP, WhatsApp, Telepon -->
-                    <div class="row"> 
+                    <div class="row">
                         <div class="col-md-4 mb-4">
                             <label for="no_whatsapp" class="form-label">
                                 <i class="ri-whatsapp-line"></i>Nomor WhatsApp
                             </label>
-                            <input 
-                                type="text" 
-                                class="form-control @error('no_whatsapp') is-invalid @enderror" 
-                                id="no_whatsapp" 
-                                name="no_whatsapp" 
+                            <input
+                                type="text"
+                                class="form-control @error('no_whatsapp') is-invalid @enderror"
+                                id="no_whatsapp"
+                                name="no_whatsapp"
                                 placeholder="08xxxxxxxxxx"
                                 value="{{ old('no_whatsapp', $pelanggan->no_whatsapp) }}">
                             @error('no_whatsapp')
@@ -321,11 +452,11 @@ document.addEventListener('DOMContentLoaded', function () {
                             <label for="no_telp" class="form-label">
                                 <i class="ri-phone-line"></i>Nomor Telepon
                             </label>
-                            <input 
-                                type="text" 
-                                class="form-control @error('no_telp') is-invalid @enderror" 
-                                id="no_telp" 
-                                name="no_telp" 
+                            <input
+                                type="text"
+                                class="form-control @error('no_telp') is-invalid @enderror"
+                                id="no_telp"
+                                name="no_telp"
                                 placeholder="08xxxxxxxxxx"
                                 value="{{ old('no_telp', $pelanggan->no_telp) }}">
                             @error('no_telp')
@@ -345,11 +476,11 @@ document.addEventListener('DOMContentLoaded', function () {
                         <label for="alamat_jalan" class="form-label">
                             <i class="ri-road-map-line"></i>Alamat Jalan
                         </label>
-                        <input 
-                            type="text" 
-                            class="form-control @error('alamat_jalan') is-invalid @enderror" 
-                            id="alamat_jalan" 
-                            name="alamat_jalan" 
+                        <input
+                            type="text"
+                            class="form-control @error('alamat_jalan') is-invalid @enderror"
+                            id="alamat_jalan"
+                            name="alamat_jalan"
                             placeholder="Contoh: Jl. Merdeka No. 123"
                             value="{{ old('alamat_jalan', $pelanggan->alamat_jalan) }}">
                         @error('alamat_jalan')
@@ -363,11 +494,11 @@ document.addEventListener('DOMContentLoaded', function () {
                             <label for="rt" class="form-label">
                                 <i class="ri-community-line"></i>RT
                             </label>
-                            <input 
-                                type="text" 
-                                class="form-control @error('rt') is-invalid @enderror" 
-                                id="rt" 
-                                name="rt" 
+                            <input
+                                type="text"
+                                class="form-control @error('rt') is-invalid @enderror"
+                                id="rt"
+                                name="rt"
                                 placeholder="001"
                                 value="{{ old('rt', $pelanggan->rt) }}">
                             @error('rt')
@@ -378,11 +509,11 @@ document.addEventListener('DOMContentLoaded', function () {
                             <label for="rw" class="form-label">
                                 <i class="ri-community-line"></i>RW
                             </label>
-                            <input 
-                                type="text" 
-                                class="form-control @error('rw') is-invalid @enderror" 
-                                id="rw" 
-                                name="rw" 
+                            <input
+                                type="text"
+                                class="form-control @error('rw') is-invalid @enderror"
+                                id="rw"
+                                name="rw"
                                 placeholder="001"
                                 value="{{ old('rw', $pelanggan->rw) }}">
                             @error('rw')
@@ -393,11 +524,11 @@ document.addEventListener('DOMContentLoaded', function () {
                             <label for="kode_pos" class="form-label">
                                 <i class="ri-mail-line"></i>Kode Pos
                             </label>
-                            <input 
-                                type="text" 
-                                class="form-control @error('kode_pos') is-invalid @enderror" 
-                                id="kode_pos" 
-                                name="kode_pos" 
+                            <input
+                                type="text"
+                                class="form-control @error('kode_pos') is-invalid @enderror"
+                                id="kode_pos"
+                                name="kode_pos"
                                 placeholder="12345"
                                 value="{{ old('kode_pos', $pelanggan->kode_pos) }}">
                             @error('kode_pos')
@@ -412,11 +543,11 @@ document.addEventListener('DOMContentLoaded', function () {
                             <label for="desa" class="form-label">
                                 <i class="ri-home-3-line"></i>Desa / Kelurahan
                             </label>
-                            <input 
-                                type="text" 
-                                class="form-control @error('desa') is-invalid @enderror" 
-                                id="desa" 
-                                name="desa" 
+                            <input
+                                type="text"
+                                class="form-control @error('desa') is-invalid @enderror"
+                                id="desa"
+                                name="desa"
                                 placeholder="Nama desa"
                                 value="{{ old('desa', $pelanggan->desa) }}">
                             @error('desa')
@@ -427,11 +558,11 @@ document.addEventListener('DOMContentLoaded', function () {
                             <label for="kecamatan" class="form-label">
                                 <i class="ri-building-line"></i>Kecamatan
                             </label>
-                            <input 
-                                type="text" 
-                                class="form-control @error('kecamatan') is-invalid @enderror" 
-                                id="kecamatan" 
-                                name="kecamatan" 
+                            <input
+                                type="text"
+                                class="form-control @error('kecamatan') is-invalid @enderror"
+                                id="kecamatan"
+                                name="kecamatan"
                                 placeholder="Nama kecamatan"
                                 value="{{ old('kecamatan', $pelanggan->kecamatan) }}">
                             @error('kecamatan')
@@ -442,11 +573,11 @@ document.addEventListener('DOMContentLoaded', function () {
                             <label for="kabupaten" class="form-label">
                                 <i class="ri-map-2-line"></i>Kabupaten / Kota
                             </label>
-                            <input 
-                                type="text" 
-                                class="form-control @error('kabupaten') is-invalid @enderror" 
-                                id="kabupaten" 
-                                name="kabupaten" 
+                            <input
+                                type="text"
+                                class="form-control @error('kabupaten') is-invalid @enderror"
+                                id="kabupaten"
+                                name="kabupaten"
                                 placeholder="Nama kabupaten"
                                 value="{{ old('kabupaten', $pelanggan->kabupaten) }}">
                             @error('kabupaten')
@@ -457,11 +588,11 @@ document.addEventListener('DOMContentLoaded', function () {
                             <label for="provinsi" class="form-label">
                                 <i class="ri-global-line"></i>Provinsi
                             </label>
-                            <input 
-                                type="text" 
-                                class="form-control @error('provinsi') is-invalid @enderror" 
-                                id="provinsi" 
-                                name="provinsi" 
+                            <input
+                                type="text"
+                                class="form-control @error('provinsi') is-invalid @enderror"
+                                id="provinsi"
+                                name="provinsi"
                                 placeholder="Nama provinsi"
                                 value="{{ old('provinsi', $pelanggan->provinsi) }}">
                             @error('provinsi')
@@ -475,11 +606,11 @@ document.addEventListener('DOMContentLoaded', function () {
                         <label for="foto_ktp" class="form-label">
                             <i class="ri-image-line"></i>Upload Foto KTP
                         </label>
-                        <input 
-                            type="file" 
-                            class="form-control @error('foto_ktp') is-invalid @enderror" 
-                            id="foto_ktp" 
-                            name="foto_ktp" 
+                        <input
+                            type="file"
+                            class="form-control @error('foto_ktp') is-invalid @enderror"
+                            id="foto_ktp"
+                            name="foto_ktp"
                             accept="image/*">
                         <small class="form-text-muted">
                             <i class="ri-information-line me-1"></i>Format: JPG, PNG. Maksimal ukuran: 2MB
@@ -512,11 +643,11 @@ document.addEventListener('DOMContentLoaded', function () {
                         <label for="nomer_id" class="form-label">
                             <i class="ri-barcode-line"></i>Nomor ID Pelanggan
                         </label>
-                        <input 
-                            type="text" 
-                            class="form-control @error('nomer_id') is-invalid @enderror" 
-                            id="nomer_id" 
-                            name="nomer_id" 
+                        <input
+                            type="text"
+                            class="form-control @error('nomer_id') is-invalid @enderror"
+                            id="nomer_id"
+                            name="nomer_id"
                             placeholder="Contoh: PLG001"
                             value="{{ old('nomer_id', $pelanggan->nomer_id) }}"
                             required>
@@ -528,23 +659,26 @@ document.addEventListener('DOMContentLoaded', function () {
                         @enderror
                     </div>
 
-                    <!-- Pilih Paket -->
+                    <!-- ? PILIH PAKET DENGAN SELECT2 SEARCH -->
                     <div class="mb-4">
                         <label for="paket_id" class="form-label">
                             <i class="ri-price-tag-3-line"></i>Pilih Paket Internet
                         </label>
-                        <select 
-                            class="form-select @error('paket_id') is-invalid @enderror" 
-                            id="paket_id" 
-                            name="paket_id" 
+                        <select
+                            class="form-select @error('paket_id') is-invalid @enderror"
+                            id="paket_id"
+                            name="paket_id"
                             required>
                             <option value="">-- Pilih Paket Internet --</option>
                             @foreach($paket as $p)
                                 <option value="{{ $p->id }}" {{ $pelanggan->paket_id == $p->id ? 'selected' : '' }}>
-                                    {{ $p->nama_paket }} - {{ $p->kecepatan }} Mbps
+                                    {{ $p->nama_paket }}
                                 </option>
                             @endforeach
                         </select>
+                        <small class="form-text-muted">
+                            <i class="ri-search-line me-1"></i>Ketik nama paket atau kecepatan untuk mencari
+                        </small>
                         @error('paket_id')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
@@ -572,11 +706,11 @@ document.addEventListener('DOMContentLoaded', function () {
                             <label for="tanggal_mulai" class="form-label">
                                 <i class="ri-calendar-line"></i>Tanggal Mulai Aktif
                             </label>
-                            <input 
-                                type="text" 
-                                class="form-control @error('tanggal_mulai') is-invalid @enderror" 
-                                id="tanggal_mulai" 
-                                name="tanggal_mulai" 
+                            <input
+                                type="text"
+                                class="form-control @error('tanggal_mulai') is-invalid @enderror"
+                                id="tanggal_mulai"
+                                name="tanggal_mulai"
                                 required>
                             @error('tanggal_mulai')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -586,11 +720,11 @@ document.addEventListener('DOMContentLoaded', function () {
                             <label for="tanggal_berakhir" class="form-label">
                                 <i class="ri-calendar-close-line"></i>Tanggal Berakhir
                             </label>
-                            <input 
-                                type="text" 
-                                class="form-control @error('tanggal_berakhir') is-invalid @enderror" 
-                                id="tanggal_berakhir" 
-                                name="tanggal_berakhir" 
+                            <input
+                                type="text"
+                                class="form-control @error('tanggal_berakhir') is-invalid @enderror"
+                                id="tanggal_berakhir"
+                                name="tanggal_berakhir"
                                 required>
                             <small class="form-text-muted">
                                 <i class="ri-information-line me-1"></i>Otomatis terisi sesuai masa aktif paket
@@ -617,10 +751,10 @@ document.addEventListener('DOMContentLoaded', function () {
                         <label for="status" class="form-label">
                             <i class="ri-checkbox-circle-line"></i>Status Persetujuan
                         </label>
-                        <select 
-                            class="form-select @error('status') is-invalid @enderror" 
-                            id="status" 
-                            name="status" 
+                        <select
+                            class="form-select @error('status') is-invalid @enderror"
+                            id="status"
+                            name="status"
                             required>
                             <option value="pending" {{ $pelanggan->status == 'pending' ? 'selected' : '' }}>
                                 Pending - Menunggu Persetujuan

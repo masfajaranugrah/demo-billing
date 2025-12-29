@@ -1,12 +1,15 @@
 <?php
+// app/Http/Controllers/IklanController.php
 
 namespace App\Http\Controllers;
 
 use App\Models\Iklan;
+use App\Models\Pelanggan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class IklanController extends Controller
@@ -14,7 +17,7 @@ class IklanController extends Controller
     public function index()
     {
         $iklans = Iklan::with('creator')
-            ->latest()
+            ->orderBy('created_at', 'desc')
             ->get();
 
         return view('content.apps.Iklan.iklan', compact('iklans'));
@@ -25,94 +28,278 @@ class IklanController extends Controller
         return view('content.apps.Iklan.add-iklan');
     }
 
-    public function store(Request $request)
-    {
-        try {
-            $validated = $request->validate([
-                'title' => 'required|string|max:255',
-                'message' => 'required|string|min:10|max:1000',
-                'type' => 'required|in:informasi,maintenance,iklan',
-                'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
-            ]);
+public function store(Request $request)
+{
+    try {
+        Log::info('Iklan store request', [
+            'user_id' => Auth::id(),
+            'data' => $request->except('image')
+        ]);
 
-            $imagePath = $request->hasFile('image')
-                ? $request->file('image')->store('iklan', 'public')
-                : null;
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'message' => 'required|string|min:10|max:1000',
+            'type' => 'required|in:informasi,maintenance,iklan',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
+        ]);
 
-            $iklan = Iklan::create([
-                'id' => (string) Str::uuid(),
-                'title' => $validated['title'],
-                'message' => $validated['message'],
-                'type' => $validated['type'],
-                'image' => $imagePath,
-                'status' => 'active',
-                'total_sent' => 0,
-                'created_by' => Auth::id()
-            ]);
-
-            // ?? KIRIM VIA QUEUE (AMAN 10.000+)
-            dispatch(new \App\Jobs\SendIklanPushJob($iklan->id));
-
-            return redirect()
-                ->route('iklan.index')
-                ->with('success', 'Iklan berhasil dibuat. Notifikasi sedang dikirim di background.');
-
-        } catch (\Throwable $e) {
-            Log::error('Store iklan error', ['error' => $e->getMessage()]);
-
-            return back()
-                ->with('error', 'Gagal membuat iklan')
-                ->withInput();
+        $imagePath = null;
+        if ($request->hasFile('image')) {
+            Log::info('Uploading image');
+            $imagePath = $request->file('image')->store('iklan', 'public');
+            Log::info('Image uploaded', ['path' => $imagePath]);
         }
-    }
 
-    public function update(Request $request, $id)
+        $iklanData = [
+            'id' => (string) Str::uuid(),
+            'title' => $validated['title'],
+            'message' => $validated['message'],
+            'type' => $validated['type'],
+            'image' => $imagePath,
+            'status' => 'active',
+            'total_sent' => 0,
+            'created_by' => Auth::id()
+        ];
+
+        Log::info('Creating iklan', $iklanData);
+        $iklan = Iklan::create($iklanData);
+        Log::info('Iklan created successfully', ['iklan_id' => $iklan->id]);
+
+        // ? Kirim push notification setelah iklan dibuat
+        $this->sendPushNotification($iklan);
+
+        return redirect()->route('iklan.index')
+            ->with('success', 'Iklan berhasil dibuat dan notifikasi terkirim!');
+
+    } catch (\Illuminate\Validation\ValidationException $e) {
+        Log::error('Validation error', ['errors' => $e->errors()]);
+        return redirect()->back()->withErrors($e->errors())->withInput();
+
+    } catch (\Exception $e) {
+        Log::error('Error creating iklan', [
+            'message' => $e->getMessage(),
+            'file' => $e->getFile(),
+            'line' => $e->getLine()
+        ]);
+        return redirect()->back()
+            ->with('error', 'Gagal membuat iklan: ' . $e->getMessage())
+            ->withInput();
+    }
+}
+
+// ? Method untuk kirim push notification via WebPushr
+private function sendPushNotification($iklan)
+{
+    try {
+        $pelanggans = Pelanggan::whereNotNull('webpushr_sid')
+            ->where('webpushr_sid', '!=', '')
+            ->get();
+
+        if ($pelanggans->isEmpty()) {
+            Log::info('Tidak ada pelanggan dengan webpushr_sid');
+            return;
+        }
+
+        $sentCount = 0;
+        $failedCount = 0;
+
+        foreach ($pelanggans as $pelanggan) {
+            try {
+                $result = $this->sendWebpushrNotification([
+                    'title' => $iklan->title,
+                    'message' => $iklan->message,
+                    'target_url' => url('https://layanan.jernih.net.id/dashboard/customer/tagihan/home'),
+                    'sid' => $pelanggan->webpushr_sid,
+                ]);
+
+                if ($result['success']) {
+                    $sentCount++;
+                } else {
+                    $failedCount++;
+                }
+
+            } catch (\Exception $e) {
+                $failedCount++;
+                Log::error('Error sending to ' . $pelanggan->nama_lengkap, ['error' => $e->getMessage()]);
+                continue;
+            }
+        }
+
+        // Update total sent
+        $iklan->update(['total_sent' => $sentCount]);
+
+        Log::info('Push notification summary', [
+            'sent' => $sentCount,
+            'failed' => $failedCount,
+            'total' => $pelanggans->count()
+        ]);
+
+    } catch (\Exception $e) {
+        Log::error('Push notification error: ' . $e->getMessage());
+    }
+}
+
+// ? Copy method dari PushNotificationController
+private function sendWebpushrNotification($data)
+{
+    try {
+        $ch = curl_init('https://api.webpushr.com/v1/notification/send/sid');
+
+        $payload = [
+            'title' => $data['title'] ?? 'Notifikasi',
+            'message' => $data['message'] ?? '',
+            'target_url' => $data['target_url'] ?? url('/'),
+            'sid' => $data['sid'],
+        ];
+
+        $headers = [
+            'Content-Type: application/json',
+            'webpushrKey: ' . env('WEBPUSHR_KEY', '2ee12b373a17d9ba5f44683cb42d4279'),
+            'webpushrAuthToken: ' . env('WEBPUSHR_TOKEN', '116294'),
+        ];
+
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
+
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curlError = curl_error($ch);
+        curl_close($ch);
+
+        $responseData = json_decode($response, true);
+
+        if ($httpCode == 200 && !empty($response)) {
+            return ['success' => true, 'response' => $responseData];
+        } else {
+            return ['success' => false, 'error' => $curlError ?: 'HTTP Code: ' . $httpCode];
+        }
+
+    } catch (\Exception $e) {
+        return ['success' => false, 'error' => $e->getMessage()];
+    }
+}
+
+
+public function update(Request $request, $id)
+{
+    try {
+        $iklan = Iklan::findOrFail($id);
+
+        // ? Validasi dengan type
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'message' => 'required|string|max:1000',
+            'type' => 'required|in:informasi,maintenance,iklan', // ? Tambah validasi type
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
+        ]);
+
+        if ($request->hasFile('image')) {
+            if ($iklan->image && Storage::disk('public')->exists($iklan->image)) {
+                Storage::disk('public')->delete($iklan->image);
+            }
+            $validated['image'] = $request->file('image')->store('iklan', 'public');
+        }
+
+        $iklan->update($validated);
+
+        return redirect()->route('iklan.index')
+            ->with('success', 'Iklan berhasil diupdate!');
+
+    } catch (\Exception $e) {
+        Log::error('Error updating iklan', ['message' => $e->getMessage()]);
+
+        return redirect()->back()
+            ->with('error', 'Gagal update iklan: ' . $e->getMessage())
+            ->withInput();
+    }
+}
+    public function send($id)
     {
         try {
             $iklan = Iklan::findOrFail($id);
 
-            $validated = $request->validate([
-                'title' => 'required|string|max:255',
-                'message' => 'required|string|max:1000',
-                'type' => 'required|in:informasi,maintenance,iklan',
-                'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
-            ]);
+            $pelanggan = Pelanggan::whereNotNull('player_id')
+                ->where('player_id', '!=', '')
+                ->get();
 
-            if ($request->hasFile('image')) {
-                if ($iklan->image) {
-                    Storage::disk('public')->delete($iklan->image);
+            $sent = 0;
+            $playerIds = [];
+
+            foreach ($pelanggan as $p) {
+                if (!empty($p->player_id)) {
+                    $playerIds[] = $p->player_id;
                 }
-                $validated['image'] = $request->file('image')->store('iklan', 'public');
             }
 
-            $iklan->update($validated);
+            if (!empty($playerIds)) {
+                $notificationData = [
+                    'app_id' => env('ONESIGNAL_APP_ID'),
+                    'include_player_ids' => $playerIds,
+                    'headings' => ['en' => $iklan->title],
+                    'contents' => ['en' => $iklan->message],
+                    'data' => [
+                        'type' => 'iklan',
+                        'iklan_id' => $iklan->id
+                    ]
+                ];
 
-            return redirect()
-                ->route('iklan.index')
-                ->with('success', 'Iklan berhasil diupdate');
+                if ($iklan->image) {
+                    $notificationData['big_picture'] = asset('storage/' . $iklan->image);
+                    $notificationData['ios_attachments'] = ['id' => asset('storage/' . $iklan->image)];
+                }
 
-        } catch (\Throwable $e) {
-            Log::error('Update iklan error', ['error' => $e->getMessage()]);
+                $response = Http::withHeaders([
+                    'Authorization' => 'Basic ' . env('ONESIGNAL_REST_API_KEY'),
+                    'Content-Type' => 'application/json'
+                ])->post('https://onesignal.com/api/v1/notifications', $notificationData);
 
-            return back()
-                ->with('error', 'Gagal update iklan')
-                ->withInput();
+                if ($response->successful()) {
+                    $sent = count($playerIds);
+                }
+            }
+
+            $iklan->update([
+                'status' => 'sent',
+                'sent_at' => now(),
+                'total_sent' => $sent
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'sent' => $sent,
+                'message' => 'Iklan berhasil dikirim!'
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error sending iklan', ['message' => $e->getMessage()]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengirim iklan: ' . $e->getMessage()
+            ], 500);
         }
     }
 
     public function destroy($id)
     {
         try {
-            Iklan::findOrFail($id)->delete();
+            $iklan = Iklan::findOrFail($id);
+            $iklan->delete();
 
-            return redirect()
-                ->route('iklan.index')
-                ->with('success', 'Iklan berhasil dihapus');
+            return redirect()->route('iklan.index')
+                ->with('success', 'Iklan berhasil dihapus!');
 
-        } catch (\Throwable $e) {
-            Log::error('Delete iklan error', ['error' => $e->getMessage()]);
+        } catch (\Exception $e) {
+            Log::error('Error deleting iklan', ['message' => $e->getMessage()]);
 
-            return back()->with('error', 'Gagal hapus iklan');
+            return redirect()->back()
+                ->with('error', 'Gagal menghapus iklan: ' . $e->getMessage());
         }
     }
 }

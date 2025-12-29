@@ -1,12 +1,11 @@
 @extends('layouts/layoutMaster')
 
-@section('title', 'Tagihan - Apps')
+@section('title', 'Daftar Tagihan')
 
 @section('vendor-style')
 @vite([
   'resources/assets/vendor/libs/datatables-bs5/datatables.bootstrap5.scss',
   'resources/assets/vendor/libs/datatables-responsive-bs5/responsive.bootstrap5.scss',
-  'resources/assets/vendor/libs/datatables-buttons-bs5/buttons.bootstrap5.scss',
   'resources/assets/vendor/libs/select2/select2.scss',
   'resources/assets/vendor/libs/sweetalert2/sweetalert2.scss',
   'resources/assets/vendor/libs/flatpickr/flatpickr.scss',
@@ -20,6 +19,8 @@
   --card-hover-shadow: 0 4px 16px rgba(0,0,0,0.12);
   --border-radius: 12px;
   --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --primary-color: #696cff;
+  --success-color: #28c76f;
 }
 
 /* Card Design */
@@ -65,6 +66,30 @@
   background: linear-gradient(180deg, #03c3ec 0%, #02a8cc 100%);
 }
 
+/* Stats Card */
+.stats-card {
+  border-radius: var(--border-radius);
+  padding: 1.5rem;
+  background: #fff;
+  border: 1px solid #f0f0f0;
+  transition: var(--transition);
+}
+
+.stats-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+.stats-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+}
+
 /* Avatar */
 .avatar-initial {
   border-radius: 12px;
@@ -78,8 +103,8 @@
 /* Buttons */
 .btn {
   border-radius: 8px;
-  padding: 0.5rem 1.25rem;
-  font-weight: 500;
+  padding: 0.625rem 1.25rem;
+  font-weight: 600;
   transition: var(--transition);
   border: none;
 }
@@ -109,6 +134,17 @@
 .btn-success {
   background: linear-gradient(135deg, #71dd37 0%, #5cb82e 100%);
   box-shadow: 0 2px 8px rgba(113, 221, 55, 0.3);
+}
+
+.btn-secondary {
+  background: #f8f9fa;
+  border: 1px solid #e0e0e0;
+  color: #6c757d;
+}
+
+.btn-secondary:hover {
+  background: #e9ecef;
+  border-color: #ccc;
 }
 
 .btn-sm {
@@ -197,8 +233,8 @@
   transition: var(--transition);
 }
 
-.table tbody tr:hover {
-  background: #f8f9fa;
+.table tbody tr:not(.empty-state-row):hover {
+  background: #f8f9ff;
   transform: scale(1.001);
 }
 
@@ -206,6 +242,16 @@
   padding: 1rem;
   border-bottom: 1px solid #f0f0f0;
   vertical-align: middle;
+}
+
+/* Empty State */
+.empty-state-row td {
+  background: #fafbfc !important;
+  border: none !important;
+}
+
+.empty-state-content {
+  padding: 3rem 1rem;
 }
 
 /* Loading Overlay */
@@ -339,6 +385,13 @@
   border-bottom: 1px solid #f0f0f0;
 }
 
+.card-header-custom {
+  background: linear-gradient(135deg, #f8f9ff 0%, #ffffff 100%);
+  border-radius: var(--border-radius) var(--border-radius) 0 0;
+  padding: 1.5rem;
+  border-bottom: 1px solid #f0f0f0;
+}
+
 /* Input Groups */
 .input-group-text {
   border-radius: 8px 0 0 8px;
@@ -346,6 +399,76 @@
   border: 1px solid #e0e0e0;
   color: #5a5f7d;
   font-weight: 500;
+}
+
+/* ========================================= */
+/* PAGINATION STYLES */
+/* ========================================= */
+.pagination-wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-top: 1px solid #f0f0f0;
+  background: #fafafa;
+  border-radius: 0 0 var(--border-radius) var(--border-radius);
+}
+
+.pagination {
+  margin: 0;
+  gap: 0.5rem;
+}
+
+.pagination .page-item .page-link {
+  border-radius: 50% !important;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #e0e0e0;
+  color: #6c757d;
+  font-weight: 600;
+  background-color: #fff;
+  margin: 0 2px;
+  transition: all 0.3s ease;
+}
+
+.pagination .page-item .page-link:hover {
+  background-color: #f3f2ff;
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(105, 108, 255, 0.2);
+}
+
+.pagination .page-item.active .page-link {
+  background-color: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
+  color: #fff !important;
+  box-shadow: 0 4px 12px rgba(105, 108, 255, 0.4);
+}
+
+.pagination .page-item.disabled .page-link {
+  background-color: #f8f9fa;
+  border-color: #e0e0e0;
+  color: #adb5bd;
+  cursor: not-allowed;
+}
+
+.pagination-info {
+  color: #6c757d;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+/* Hide DataTables default controls */
+.dataTables_info,
+.dataTables_paginate,
+.dataTables_length,
+.dataTables_filter {
+  display: none !important;
 }
 
 /* Animations */
@@ -365,6 +488,11 @@
   }
   .card-body {
     padding: 1.25rem;
+  }
+  .pagination-wrapper {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
   }
 }
 </style>
@@ -388,7 +516,7 @@ document.addEventListener("DOMContentLoaded", function () {
     function showLoading() {
         $('.loading-overlay').css('display', 'flex');
     }
-    
+
     function hideLoading() {
         $('.loading-overlay').fadeOut(300);
     }
@@ -409,15 +537,15 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 
-    flatpickr("#tanggal_mulai", { 
-        dateFormat: "Y-m-d", 
-        defaultDate: new Date(), 
-        allowInput: true 
+    flatpickr("#tanggal_mulai", {
+        dateFormat: "Y-m-d",
+        defaultDate: new Date(),
+        allowInput: true
     });
-    
-    flatpickr("#tanggal_berakhir", { 
-        dateFormat: "Y-m-d", 
-        allowInput: false 
+
+    flatpickr("#tanggal_berakhir", {
+        dateFormat: "Y-m-d",
+        allowInput: false
     });
 
     // ========================================
@@ -480,218 +608,87 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     // ========================================
-    // DATATABLES
+    // DATATABLES - TANPA SEARCH & PAGINATION
     // ========================================
-    const dtUserTable = $('.datatables-users').DataTable({
-        paging: true,
-        pageLength: 10,
-        lengthMenu: [5, 10, 25, 50, 100],
-        ordering: true,
-        searching: true,
-        info: true,
-        responsive: false,
-        scrollX: false,
-        autoWidth: false,
-        dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>rtip',
-        columnDefs: [
-            { orderable: false, targets: [0, -1], width: '80px' },
-            { width: '100px', targets: 1 },
-            { width: 'auto', targets: [2, 3, 4, 5, 6] }
-        ],
-        language: {
-            paginate: {
-                previous: '<i class="ri-arrow-left-s-line"></i>',
-                next: '<i class="ri-arrow-right-s-line"></i>'
-            },
-            search: "_INPUT_",
-            searchPlaceholder: "Cari tagihan...",
-            lengthMenu: "Tampilkan _MENU_ data",
-            info: "Menampilkan _START_ - _END_ dari _TOTAL_ tagihan",
-            infoEmpty: "Tidak ada data",
-            infoFiltered: "(difilter dari _MAX_ total data)",
-            zeroRecords: "Tidak ada data yang sesuai"
+    const $table = $('.datatables-users');
+    if ($table.length) {
+        const hasData = $table.find('tbody tr').not('.empty-state-row').length > 0;
+
+        if (hasData) {
+            try {
+                $table.DataTable({
+                    paging: false,
+                    lengthChange: false,
+                    searching: false,
+                    ordering: true,
+                    info: false,
+                    scrollX: true,
+                    autoWidth: false,
+                    dom: 'rt',
+                    columnDefs: [
+                        { orderable: false, targets: [0, -1] },
+                        { width: '80px', targets: 0 },
+                        { width: '100px', targets: 1 }
+                    ],
+                    language: {
+                        emptyTable: "Tidak ada data tersedia",
+                        zeroRecords: "Tidak ada data yang sesuai"
+                    }
+                });
+            } catch (error) {
+                console.warn('DataTables initialization error:', error);
+            }
         }
+    }
+
+    // ========================================
+    // AUTO SUBMIT ON FILTER CHANGE
+    // ========================================
+    $('#statusFilter').on('change', function() {
+        $('#filterForm').submit();
     });
 
     // ========================================
-    // DETAIL MODAL
+    // LOADING OVERLAY ON FORM SUBMIT
     // ========================================
-    $(document).on('click', '.btn-detail', function(e) {
+    $('#filterForm').on('submit', function() {
+        showLoading();
+    });
+
+    // ========================================
+    // SWEETALERT DELETE
+    // ========================================
+    $(document).on('submit', '.delete-form', function(e) {
         e.preventDefault();
         e.stopPropagation();
-        
-        const tr = $(this).closest('tr');
-        const row = dtUserTable.row(tr).data();
-        if (!row) return;
+        const form = this;
 
-        // Get all data from row
-        const nomorId = row[1] || '-';
-        const namaLengkap = row[2] || '-';
-        const noWhatsapp = row[3] || '-';
-        const statusPembayaran = row[4] || '-';
-        const paket = row[5] || '-';
-        const harga = row[6] || '-';
-        
-        // Get hidden data from tr attributes
-        const $tr = $(tr);
-        const alamatLengkap = $tr.data('alamat') || '-';
-        const kecamatan = $tr.data('kecamatan') || '-';
-        const kabupaten = $tr.data('kabupaten') || '-';
-        const provinsi = $tr.data('provinsi') || '-';
-        const kecepatan = $tr.data('kecepatan') || '-';
-        const tanggalMulai = $tr.data('tanggal-mulai') || '-';
-        const jatuhTempo = $tr.data('jatuh-tempo') || '-';
-        const catatan = $tr.data('catatan') || '-';
-        const buktiPembayaran = $tr.data('bukti') || '';
-        
-        const initial = namaLengkap ? namaLengkap.charAt(0).toUpperCase() : '?';
-        const statusLower = statusPembayaran.toLowerCase();
-        const statusClass = statusLower.includes('lunas') ? 'bg-success' : 'bg-danger';
-        
-        // Build bukti pembayaran section
-        let buktiSection = '-';
-        if (buktiPembayaran) {
-            buktiSection = `<a href="${buktiPembayaran}" target="_blank" class="btn btn-sm btn-outline-primary">
-                <i class="ri-file-text-line me-1"></i>Lihat Bukti
-            </a>`;
-        }
-        
-        const html = `
-            <div class="customer-header-info">
-                <div class="customer-avatar mx-auto">${initial}</div>
-                <div class="customer-name">${namaLengkap}</div>
-                <div class="customer-status ${statusClass}">
-                    <i class="ri-checkbox-circle-line me-2"></i>${statusPembayaran}
-                </div>
-            </div>
-
-            <div class="detail-section">
-                <h6><i class="ri-user-3-line"></i>Informasi Pelanggan</h6>
-                <div class="detail-item">
-                    <span class="detail-label"><i class="ri-id-card-line"></i>No. ID</span>
-                    <span class="detail-value"><strong>${nomorId}</strong></span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label"><i class="ri-user-line"></i>Nama Lengkap</span>
-                    <span class="detail-value">${namaLengkap}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label"><i class="ri-whatsapp-line"></i>No. WhatsApp</span>
-                    <span class="detail-value">
-                        <a href="https://wa.me/${noWhatsapp}" target="_blank" class="text-success text-decoration-none">
-                            <strong>${noWhatsapp}</strong>
-                        </a>
-                    </span>
-                </div>
-            </div>
-
-            <div class="detail-section">
-                <h6><i class="ri-map-pin-line"></i>Alamat Lengkap</h6>
-                <div class="detail-item">
-                    <span class="detail-label"><i class="ri-map-2-line"></i>Alamat</span>
-                    <span class="detail-value">${alamatLengkap}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label"><i class="ri-building-line"></i>Kecamatan</span>
-                    <span class="detail-value">${kecamatan}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label"><i class="ri-community-line"></i>Kabupaten</span>
-                    <span class="detail-value">${kabupaten}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label"><i class="ri-map-pin-2-line"></i>Provinsi</span>
-                    <span class="detail-value">${provinsi}</span>
-                </div>
-            </div>
-
-            <div class="detail-section">
-                <h6><i class="ri-box-3-line"></i>Informasi Paket</h6>
-                <div class="detail-item">
-                    <span class="detail-label"><i class="ri-box-line"></i>Nama Paket</span>
-                    <span class="detail-value"><span class="badge bg-label-info">${paket}</span></span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label"><i class="ri-money-dollar-circle-line"></i>Harga</span>
-                    <span class="detail-value"><strong>${harga}</strong></span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label"><i class="ri-speed-line"></i>Kecepatan</span>
-                    <span class="detail-value">${kecepatan}</span>
-                </div>
-            </div>
-
-            <div class="detail-section">
-                <h6><i class="ri-calendar-check-line"></i>Informasi Tagihan</h6>
-                <div class="detail-item">
-                    <span class="detail-label"><i class="ri-calendar-line"></i>Tanggal Mulai</span>
-                    <span class="detail-value">${tanggalMulai}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label"><i class="ri-calendar-event-line"></i>Jatuh Tempo</span>
-                    <span class="detail-value"><strong class="text-danger">${jatuhTempo}</strong></span>
-                </div>
-            
-                <div class="detail-item">
-                    <span class="detail-label"><i class="ri-file-text-line"></i>Catatan</span>
-                    <span class="detail-value">${catatan}</span>
-                </div>
-            </div>
-        `;
-        
-        $('#detailModal .modal-body').html(html);
-        $('#detailModal').modal('show');
+        Swal.fire({
+            title: 'Konfirmasi Penghapusan',
+            html: '<p class="mb-0">Yakin ingin menghapus tagihan ini?<br><strong class="text-danger">Data tidak dapat dikembalikan!</strong></p>',
+            icon: 'warning',
+            showCancelButton: true,
+            showConfirmButton: true,
+            showDenyButton: false,
+            confirmButtonColor: '#f5365c',
+            cancelButtonColor: '#8898aa',
+            confirmButtonText: '<i class="ri-delete-bin-line me-1"></i>Hapus',
+            cancelButtonText: 'Batal',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            reverseButtons: true,
+            customClass: {
+                confirmButton: 'btn btn-danger me-2',
+                cancelButton: 'btn btn-secondary'
+            },
+            buttonsStyling: false
+        }).then((result) => {
+            if (result.isConfirmed) {
+                showLoading();
+                setTimeout(() => form.submit(), 500);
+            }
+        });
     });
-
-    // ========================================
-    // FILTER DROPDOWN
-    // ========================================
-    $('#statusPembayaranFilter').on('change', function() {
-        dtUserTable.column(4).search($(this).val()).draw();
-    });
-    $('#kabupatenFilter').on('change', function() {
-        dtUserTable.search($(this).val()).draw();
-    });
-    $('#kecamatanFilter').on('change', function() {
-        dtUserTable.search($(this).val()).draw();
-    });
-
-  
-// ========================================
-// SWEETALERT DELETE - ONLY 2 BUTTONS
-// ========================================
-$(document).on('submit', '.delete-form', function(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    const form = this;
-
-    Swal.fire({
-        title: 'Konfirmasi Penghapusan',
-        html: '<p class="mb-0">Yakin ingin menghapus tagihan ini?<br><strong class="text-danger">Data tidak dapat dikembalikan!</strong></p>',
-        icon: 'warning',
-        showCancelButton: true,
-        showConfirmButton: true,
-        showDenyButton: false,  // ? Explicitly disable deny button (No button)
-        confirmButtonColor: '#f5365c',
-        cancelButtonColor: '#8898aa',
-        confirmButtonText: '<i class="ri-delete-bin-line me-1"></i>Hapus',
-        cancelButtonText: 'Batal',
-        allowOutsideClick: false,
-        allowEscapeKey: false,
-        reverseButtons: true,
-        customClass: {
-            confirmButton: 'btn btn-danger me-2',
-            cancelButton: 'btn btn-secondary'
-        },
-        buttonsStyling: false
-    }).then((result) => {
-        if (result.isConfirmed) {
-            showLoading();
-            setTimeout(() => form.submit(), 500);
-        }
-    });
-});
-
 
     // ========================================
     // KONFIRMASI PEMBAYARAN
@@ -726,8 +723,8 @@ $(document).on('submit', '.delete-form', function(e) {
                 .done(resp => {
                     hideLoading();
                     if (resp.success) {
-                        Swal.fire({ 
-                            icon: 'success', 
+                        Swal.fire({
+                            icon: 'success',
                             title: 'Berhasil!',
                             text: 'Pembayaran berhasil dikonfirmasi',
                             timer: 1500,
@@ -753,18 +750,183 @@ $(document).on('submit', '.delete-form', function(e) {
     // MASS TAGIHAN
     // ========================================
     $('#modalMassTagihan').on('shown.bs.modal', function () {
-        flatpickr(".flatpickr-select-start-all", { 
-            dateFormat: "Y-m-d", 
-            defaultDate: new Date(), 
-            minDate: "today", 
-            allowInput: true 
+        flatpickr(".flatpickr-select-start-all", {
+            dateFormat: "Y-m-d",
+            defaultDate: new Date(),
+            minDate: "today",
+            allowInput: true
         });
-        flatpickr(".flatpickr-select-start-end", { 
-            dateFormat: "Y-m-d", 
-            defaultDate: new Date().fp_incr(7), 
-            minDate: "today", 
-            allowInput: true 
+        flatpickr(".flatpickr-select-start-end", {
+            dateFormat: "Y-m-d",
+            defaultDate: new Date().fp_incr(7),
+            minDate: "today",
+            allowInput: true
         });
+    });
+
+    // ========================================
+    // ? BUTTON DETAIL - SHOW MODAL
+    // ========================================
+    $(document).on('click', '.btn-detail', function() {
+        const $row = $(this).closest('tr');
+
+        // Ambil data dari table cells
+        const nomorId = $row.find('.badge.bg-label-dark').text().trim();
+        const namaLengkap = $row.find('td:nth-child(3) strong').text().trim();
+        const noWhatsapp = $row.find('code').text().trim().replace(/\D/g, '');
+        const noWhatsappDisplay = $row.find('code').text().trim();
+        const status = $row.find('td:nth-child(5) .badge').text().trim();
+        const paket = $row.find('td:nth-child(6) .badge').text().trim();
+        const harga = $row.find('td:nth-child(7) strong').text().trim();
+
+        // Data dari attribute
+        const alamat = $row.data('alamat') || '-';
+        const kecamatan = $row.data('kecamatan') || '-';
+        const kabupaten = $row.data('kabupaten') || '-';
+        const provinsi = $row.data('provinsi') || '-';
+        const kecepatan = $row.data('kecepatan') || '-';
+        const tanggalMulai = $row.data('tanggal-mulai') || '-';
+        const jatuhTempo = $row.data('jatuh-tempo') || '-';
+        const catatan = $row.data('catatan') || '-';
+        const buktiUrl = $row.data('bukti') || '';
+
+        // Badge status color
+        const statusClass = status.toLowerCase().includes('lunas') ? 'bg-success' : 'bg-danger';
+        const statusIcon = status.toLowerCase().includes('lunas') ? 'checkbox-circle' : 'close-circle';
+
+        // Build modal content
+        const modalContent = `
+            <div class="customer-header-info">
+                <div class="customer-avatar">
+                    ${namaLengkap.charAt(0).toUpperCase()}
+                </div>
+                <h5 class="customer-name">${namaLengkap}</h5>
+                <span class="badge ${statusClass} customer-status">
+                    <i class="ri-${statusIcon}-line me-1"></i>
+                    ${status}
+                </span>
+            </div>
+
+            <!-- Informasi Dasar -->
+            <div class="detail-section">
+                <h6><i class="ri-user-3-line"></i>Informasi Dasar</h6>
+                <div class="detail-item">
+                    <div class="detail-label">
+                        <i class="ri-barcode-line"></i>
+                        Nomor ID
+                    </div>
+                    <div class="detail-value"><strong>${nomorId}</strong></div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">
+                        <i class="ri-user-line"></i>
+                        Nama Lengkap
+                    </div>
+                    <div class="detail-value">${namaLengkap}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">
+                        <i class="ri-whatsapp-line"></i>
+                        WhatsApp
+                    </div>
+                    <div class="detail-value">
+                        <a href="https://wa.me/${noWhatsapp}" target="_blank" class="text-success text-decoration-none">
+                            <i class="ri-whatsapp-line me-1"></i>${noWhatsappDisplay}
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alamat -->
+            <div class="detail-section">
+                <h6><i class="ri-map-pin-line"></i>Alamat Lengkap</h6>
+                <div class="detail-item">
+                    <div class="detail-label">
+                        <i class="ri-map-2-line"></i>
+                        Alamat
+                    </div>
+                    <div class="detail-value">${alamat}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">
+                        <i class="ri-building-line"></i>
+                        Kecamatan
+                    </div>
+                    <div class="detail-value">${kecamatan}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">
+                        <i class="ri-map-pin-range-line"></i>
+                        Kabupaten
+                    </div>
+                    <div class="detail-value">${kabupaten}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">
+                        <i class="ri-global-line"></i>
+                        Provinsi
+                    </div>
+                    <div class="detail-value">${provinsi}</div>
+                </div>
+            </div>
+
+            <!-- Paket Internet -->
+            <div class="detail-section">
+                <h6><i class="ri-wifi-line"></i>Paket Internet</h6>
+                <div class="detail-item">
+                    <div class="detail-label">
+                        <i class="ri-box-3-line"></i>
+                        Nama Paket
+                    </div>
+                    <div class="detail-value">${paket}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">
+                        <i class="ri-speed-line"></i>
+                        Kecepatan
+                    </div>
+                    <div class="detail-value"><strong>${kecepatan}</strong></div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">
+                        <i class="ri-money-dollar-circle-line"></i>
+                        Harga
+                    </div>
+                    <div class="detail-value"><strong class="text-primary">${harga}</strong></div>
+                </div>
+            </div>
+
+            <!-- Tagihan -->
+            <div class="detail-section">
+                <h6><i class="ri-calendar-check-line"></i>Detail Tagihan</h6>
+                <div class="detail-item">
+                    <div class="detail-label">
+                        <i class="ri-calendar-line"></i>
+                        Tanggal Mulai
+                    </div>
+                    <div class="detail-value">${tanggalMulai}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">
+                        <i class="ri-calendar-close-line"></i>
+                        Jatuh Tempo
+                    </div>
+                    <div class="detail-value"><strong class="text-danger">${jatuhTempo}</strong></div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">
+                        <i class="ri-file-text-line"></i>
+                        Catatan
+                    </div>
+                    <div class="detail-value">${catatan}</div>
+                </div>
+
+            </div>
+        `;
+
+        // Populate modal dan tampilkan
+        $('#detailModal .modal-body').html(modalContent);
+        $('#detailModal').modal('show');
     });
 });
 </script>
@@ -785,246 +947,285 @@ $(document).on('submit', '.delete-form', function(e) {
   <div class="row g-4 mb-4">
     <!-- Total Customer -->
     <div class="col-xl-3 col-md-6">
-      <div class="card card-border-shadow-primary h-100">
-        <div class="card-body">
-          <div class="d-flex align-items-start justify-content-between mb-3">
-            <div class="avatar me-3">
-              <span class="avatar-initial rounded bg-label-primary d-flex justify-content-center align-items-center" style="width:48px; height:48px;">
-                <i class="ri-group-line" style="font-size:24px;"></i>
-              </span>
-            </div>
-            <div class="flex-grow-1">
-              <p class="mb-1 text-muted fw-medium" style="font-size: 0.875rem;">Total Customer</p>
-              <h3 class="mb-0 fw-bold">{{ $totalCustomer }}</h3>
-            </div>
+      <div class="stats-card">
+        <div class="d-flex align-items-center">
+          <div class="stats-icon bg-label-primary me-3">
+            <i class="ri-group-line"></i>
           </div>
-          <small class="text-muted">
-            <span class="badge bg-label-primary me-1">100%</span>
-            dari total pelanggan
-          </small>
+          <div>
+            <p class="mb-0 text-muted small">Total Customer</p>
+            <h2 class="mb-0 fw-bold">{{ $totalCustomer }}</h2>
+          </div>
         </div>
       </div>
     </div>
 
     <!-- Lunas -->
     <div class="col-xl-3 col-md-6">
-      <div class="card card-border-shadow-success h-100">
-        <div class="card-body">
-          <div class="d-flex align-items-start justify-content-between mb-3">
-            <div class="avatar me-3">
-              <span class="avatar-initial rounded bg-label-success d-flex justify-content-center align-items-center" style="width:48px; height:48px;">
-                <i class="ri-checkbox-circle-line" style="font-size:24px;"></i>
-              </span>
-            </div>
-            <div class="flex-grow-1">
-              <p class="mb-1 text-muted fw-medium" style="font-size: 0.875rem;">Pembayaran Lunas</p>
-              <h3 class="mb-0 fw-bold">{{ $lunas }}</h3>
-            </div>
+      <div class="stats-card">
+        <div class="d-flex align-items-center">
+          <div class="stats-icon bg-label-success me-3">
+            <i class="ri-checkbox-circle-line"></i>
           </div>
-          <small class="text-muted">
-            <span class="badge bg-label-success me-1">{{ round($lunas / max($totalCustomer,1) * 100) }}%</span>
-            dari total customer
-          </small>
+          <div>
+            <p class="mb-0 text-muted small">Pembayaran Lunas</p>
+            <h2 class="mb-0 fw-bold text-success">{{ $lunas }}</h2>
+          </div>
         </div>
       </div>
     </div>
 
     <!-- Belum Lunas -->
     <div class="col-xl-3 col-md-6">
-      <div class="card card-border-shadow-warning h-100">
-        <div class="card-body">
-          <div class="d-flex align-items-start justify-content-between mb-3">
-            <div class="avatar me-3">
-              <span class="avatar-initial rounded bg-label-warning d-flex justify-content-center align-items-center" style="width:48px; height:48px;">
-                <i class="ri-error-warning-line" style="font-size:24px;"></i>
-              </span>
-            </div>
-            <div class="flex-grow-1">
-              <p class="mb-1 text-muted fw-medium" style="font-size: 0.875rem;">Belum Lunas</p>
-              <h3 class="mb-0 fw-bold">{{ $belumLunas }}</h3>
-            </div>
+      <div class="stats-card">
+        <div class="d-flex align-items-center">
+          <div class="stats-icon bg-label-warning me-3">
+            <i class="ri-error-warning-line"></i>
           </div>
-          <small class="text-muted">
-            <span class="badge bg-label-warning me-1">{{ round($belumLunas / max($totalCustomer,1) * 100) }}%</span>
-            dari total customer
-          </small>
+          <div>
+            <p class="mb-0 text-muted small">Belum Lunas</p>
+            <h2 class="mb-0 fw-bold text-warning">{{ $belumLunas }}</h2>
+          </div>
         </div>
       </div>
     </div>
 
     <!-- Total Paket -->
     <div class="col-xl-3 col-md-6">
-      <div class="card card-border-shadow-info h-100">
-        <div class="card-body">
-          <div class="d-flex align-items-start justify-content-between mb-3">
-            <div class="avatar me-3">
-              <span class="avatar-initial rounded bg-label-info d-flex justify-content-center align-items-center" style="width:48px; height:48px;">
-                <i class="ri-box-3-line" style="font-size:24px;"></i>
-              </span>
-            </div>
-            <div class="flex-grow-1">
-              <p class="mb-1 text-muted fw-medium" style="font-size: 0.875rem;">Total Paket</p>
-              <h3 class="mb-0 fw-bold">{{ $totalPaket }}</h3>
-            </div>
+      <div class="stats-card">
+        <div class="d-flex align-items-center">
+          <div class="stats-icon bg-label-info me-3">
+            <i class="ri-box-3-line"></i>
           </div>
-          <small class="text-muted">
-            <span class="badge bg-label-info me-1">Aktif</span>
-            paket tersedia
-          </small>
+          <div>
+            <p class="mb-0 text-muted small">Total Paket</p>
+            <h2 class="mb-0 fw-bold text-info">{{ $totalPaket }}</h2>
+          </div>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- ========================================= -->
+  <!-- FILTER & SEARCH -->
+  <!-- ========================================= -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <form method="GET" action="{{ route('tagihan.get') }}" id="filterForm">
+        <div class="row g-3 align-items-end">
+          <div class="col-md-9">
+            <label class="form-label small fw-semibold mb-2">
+              <i class="ri-search-line me-1"></i>Pencarian
+            </label>
+            <input
+              type="text"
+              name="search"
+              class="form-control"
+              placeholder="Cari nama, No. ID, WhatsApp..."
+              value="{{ request('search') }}">
+          </div>
+
+          <div class="col-md-3">
+            <div class="d-flex gap-2">
+              <button type="submit" class="btn btn-primary flex-grow-1">
+                <i class="ri-search-line me-1"></i>Cari
+              </button>
+              @if(request()->hasAny(['search']))
+                <a href="{{ route('tagihan.index') }}" class="btn btn-secondary">
+                  <i class="ri-refresh-line me-1"></i>Reset
+                </a>
+              @endif
+            </div>
+          </div>
+        </div>
+      </form>
     </div>
   </div>
 
   <!-- ========================================= -->
   <!-- DAFTAR TAGIHAN -->
   <!-- ========================================= -->
-  <div class="card">
-    <div class="card-header">
-      <div class="row align-items-center">
-        <div class="col-md-6">
-          <h5 class="mb-0 fw-bold">
-            <i class="ri-file-list-3-line me-2 text-primary"></i>
-            Daftar Tagihan
-          </h5>
-          <small class="text-muted">Kelola seluruh tagihan pelanggan</small>
+  <div class="card border-0 shadow-sm">
+    <div class="card-header-custom">
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div>
+          <h4 class="mb-1 fw-bold">
+            <i class="ri-file-list-3-line me-2"></i>Daftar Tagihan
+          </h4>
+          <p class="mb-0 opacity-75 small">Kelola seluruh tagihan pelanggan secara efisien.</p>
         </div>
-        <div class="col-md-6 text-md-end mt-3 mt-md-0">
-          <button type="button" class="btn btn-primary me-2" data-bs-toggle="modal" data-bs-target="#modalTambahTagihan">
-            <i class="ri-add-line me-1"></i>
-            Tambah Tagihan
+
+        <div class="d-flex align-items-center gap-2">
+          @if($tagihans->total() > 0)
+            <span class="badge bg-label-primary" style="padding: 10px 20px; font-size: 0.9rem;">
+              <i class="ri-database-2-line me-1"></i>
+              {{ $tagihans->total() }} Data Total
+            </span>
+          @endif
+
+          <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalTambahTagihan">
+            <i class="ri-add-line me-1"></i>Tambah Tagihan
           </button>
           <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#modalMassTagihan">
-            <i class="ri-group-line me-1"></i>
-            Tagihan Massal
+            <i class="ri-group-line me-1"></i>Tagihan Massal
           </button>
         </div>
       </div>
+    </div>
 
-      <!-- Filters -->
-      <div class="row g-3 mt-3">
-        <div class="col-md-4">
-          <label class="form-label small text-muted mb-1">Status Pembayaran</label>
-          <select id="statusPembayaranFilter" class="form-select">
-            <option value="">Semua Status</option>
-            <option value="lunas">Sudah Lunas</option>
-            <option value="belum bayar">Belum Bayar</option>
-          </select>
-        </div>
+    <div class="card-body p-0">
+      <div class="table-responsive p-3">
+        <table class="datatables-users table table-hover nowrap" style="width: 100%;">
+          <thead>
+            <tr>
+              <th><i class="ri-eye-line me-1"></i>Detail</th>
+              <th><i class="ri-barcode-line me-1"></i>No. ID</th>
+              <th><i class="ri-user-3-line me-1"></i>Nama</th>
+              <th><i class="ri-whatsapp-line me-1"></i>No. WA</th>
+              <th><i class="ri-shield-check-line me-1"></i>Status</th>
+              <th><i class="ri-box-3-line me-1"></i>Paket</th>
+              <th><i class="ri-money-dollar-circle-line me-1"></i>Harga</th>
+              <th><i class="ri-settings-3-line me-1"></i>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @forelse($tagihans as $item)
+            @php
+              $status = strtolower($item['status_pembayaran'] ?? '');
+              $badgeClass = match($status) {
+                'lunas' => 'badge bg-success',
+                'belum bayar' => 'badge bg-danger',
+                default => 'badge bg-secondary',
+              };
 
-        <div class="col-md-4">
-          <label class="form-label small text-muted mb-1">Kabupaten</label>
-          <select id="kabupatenFilter" class="form-select">
-            <option value="">Semua Kabupaten</option>
-            @foreach($kabupatenList as $kab)
-              <option value="{{ strtolower($kab) }}">{{ $kab }}</option>
-            @endforeach
-          </select>
-        </div>
+              $alamatParts = [];
+              if($item['alamat_jalan']) $alamatParts[] = $item['alamat_jalan'];
+              if($item['rt'] || $item['rw']) $alamatParts[] = 'RT '.$item['rt'].' / RW '.$item['rw'];
+              if($item['desa']) $alamatParts[] = 'Desa '.$item['desa'];
+              if($item['kecamatan']) $alamatParts[] = 'Kecamatan '.$item['kecamatan'];
+              if($item['kabupaten']) $alamatParts[] = 'Kabupaten '.$item['kabupaten'];
+              if($item['provinsi']) $alamatParts[] = $item['provinsi'];
+              $alamatLengkap = implode(', ', $alamatParts);
 
-        <div class="col-md-4">
-          <label class="form-label small text-muted mb-1">Kecamatan</label>
-          <select id="kecamatanFilter" class="form-select">
-            <option value="">Semua Kecamatan</option>
-            @foreach($kecamatanList as $kec)
-              <option value="{{ strtolower($kec) }}">{{ $kec }}</option>
-            @endforeach
-          </select>
-        </div>
+              $buktiUrl = !empty($item['bukti_pembayaran']) ? asset('storage/kwitansi/' . $item['bukti_pembayaran']) : '';
+            @endphp
+            <tr
+              data-alamat="{{ $alamatLengkap }}"
+              data-kecamatan="{{ $item['kecamatan'] ?? '-' }}"
+              data-kabupaten="{{ $item['kabupaten'] ?? '-' }}"
+              data-provinsi="{{ $item['provinsi'] ?? '-' }}"
+              data-kecepatan="{{ $item['paket']['kecepatan'] ?? '-' }} Mbps"
+              data-tanggal-mulai="{{ $item['tanggal_mulai'] ? \Carbon\Carbon::parse($item['tanggal_mulai'])->format('d M Y') : '-' }}"
+              data-jatuh-tempo="{{ $item['tanggal_berakhir'] ? \Carbon\Carbon::parse($item['tanggal_berakhir'])->format('d M Y') : '-' }}"
+              data-catatan="{{ $item['catatan'] ?? '-' }}"
+              data-bukti="{{ $buktiUrl }}"
+            >
+              <td>
+                <button class="btn btn-sm btn-icon btn-outline-primary btn-detail" title="Lihat Detail">
+                  <i class="ri-eye-line"></i>
+                </button>
+              </td>
+              <td><span class="badge bg-label-dark">{{ $item['nomer_id'] }}</span></td>
+              <td><strong>{{ $item['nama_lengkap'] }}</strong></td>
+              <td>
+                <a href="https://wa.me/{{ $item['no_whatsapp'] }}" target="_blank" class="text-decoration-none">
+                  <code style="background: #f8f9fa; padding: 6px 12px; border-radius: 6px; font-size: 0.875rem; font-weight: 600; color: #25D366;">
+                    <i class="ri-whatsapp-line me-1"></i>{{ $item['no_whatsapp'] }}
+                  </code>
+                </a>
+              </td>
+              <td>
+                <span class="{{ $badgeClass }}">
+                  <i class="ri-{{ $status == 'lunas' ? 'checkbox-circle' : 'close-circle' }}-line me-1"></i>
+                  {{ ucfirst($status ?: '-') }}
+                </span>
+              </td>
+              <td>
+                <span class="badge bg-label-info">
+                  <i class="ri-box-line me-1"></i>{{ $item['paket']['nama_paket'] ?? '-' }}
+                </span>
+              </td>
+              <td><strong>Rp {{ number_format($item['paket']['harga'] ?? 0, 0, ',', '.') }}</strong></td>
+              <td>
+                <div class="d-flex gap-2">
+                  <button type="button"
+                    class="btn btn-sm btn-outline-primary"
+                    data-bs-toggle="modal"
+                    data-bs-target="#modalEditTagihan-{{ $item['id'] }}"
+                    title="Edit">
+                    <i class="ri-edit-2-line"></i>
+                  </button>
+
+                  <form action="{{ route('tagihan.destroy', $item['id']) }}" method="POST" class="delete-form d-inline">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Hapus">
+                      <i class="ri-delete-bin-line"></i>
+                    </button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+            @empty
+            <tr class="empty-state-row">
+              <td colspan="8" class="text-center">
+                <div class="empty-state-content">
+                  <div class="mb-3">
+                    <i class="ri-inbox-line" style="font-size: 4rem; color: #ddd;"></i>
+                  </div>
+
+                  @if(request()->hasAny(['search']))
+                    <h5 class="text-muted mb-2">
+                      <i class="ri-search-eye-line me-2"></i>Data Tidak Ditemukan
+                    </h5>
+                    <p class="text-muted mb-3">
+                      Tidak ada data yang sesuai dengan pencarian Anda.
+                    </p>
+
+                    <div class="mb-3">
+                      @if(request('search'))
+                        <span class="badge bg-label-primary me-2" style="padding: 8px 16px;">
+                          <i class="ri-search-line me-1"></i>
+                          Pencarian: "{{ request('search') }}"
+                        </span>
+                      @endif
+                    </div>
+
+                    <a href="{{ route('tagihan.index') }}" class="btn btn-primary mt-2">
+                      <i class="ri-refresh-line me-1"></i>Reset & Tampilkan Semua Data
+                    </a>
+                  @else
+                    <h5 class="text-muted mb-2">
+                      <i class="ri-file-list-line me-2"></i>Belum Ada Data Tagihan
+                    </h5>
+                    <p class="text-muted">
+                      Saat ini belum ada data tagihan yang terdaftar dalam sistem.
+                    </p>
+                  @endif
+                </div>
+              </td>
+            </tr>
+            @endforelse
+          </tbody>
+        </table>
       </div>
     </div>
 
-    <div class="card-datatable table-responsive">
-      <table class="datatables-users table">
-        <thead>
-          <tr>
-            <th>Detail</th>
-            <th>No. ID</th>
-            <th>Nama</th>
-            <th>No. WA</th>
-            <th>Status</th>
-            <th>Paket</th>
-            <th>Harga</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          @foreach($tagihans as $item)
-          @php
-            $status = strtolower($item['status_pembayaran'] ?? '');
-            $badgeClass = match($status) {
-              'lunas' => 'badge bg-success',
-              'belum bayar' => 'badge bg-danger',
-              default => 'badge bg-secondary',
-            };
-            
-            $alamatParts = [];
-            if($item['alamat_jalan']) $alamatParts[] = $item['alamat_jalan'];
-            if($item['rt'] || $item['rw']) $alamatParts[] = 'RT '.$item['rt'].' / RW '.$item['rw'];
-            if($item['desa']) $alamatParts[] = 'Desa '.$item['desa'];
-            if($item['kecamatan']) $alamatParts[] = 'Kecamatan '.$item['kecamatan'];
-            if($item['kabupaten']) $alamatParts[] = 'Kabupaten '.$item['kabupaten'];
-            if($item['provinsi']) $alamatParts[] = $item['provinsi'];
-            $alamatLengkap = implode(', ', $alamatParts);
-            
-            $buktiUrl = !empty($item['bukti_pembayaran']) ? asset('storage/kwitansi/' . $item['bukti_pembayaran']) : '';
-          @endphp
-          <tr 
-            data-alamat="{{ $alamatLengkap }}"
-            data-kecamatan="{{ $item['kecamatan'] ?? '-' }}"
-            data-kabupaten="{{ $item['kabupaten'] ?? '-' }}"
-            data-provinsi="{{ $item['provinsi'] ?? '-' }}"
-            data-kecepatan="{{ $item['paket']['kecepatan'] ?? '-' }} Mbps"
-            data-tanggal-mulai="{{ $item['tanggal_mulai'] ? \Carbon\Carbon::parse($item['tanggal_mulai'])->format('d M Y') : '-' }}"
-            data-jatuh-tempo="{{ $item['tanggal_berakhir'] ? \Carbon\Carbon::parse($item['tanggal_berakhir'])->format('d M Y') : '-' }}"
-            data-catatan="{{ $item['catatan'] ?? '-' }}"
-            data-bukti="{{ $buktiUrl }}"
-          >
-            <td>
-              <button class="btn btn-sm btn-icon btn-outline-primary btn-detail" title="Lihat Detail">
-                <i class="ri-eye-line"></i>
-              </button>
-            </td>
-            <td><span class="badge bg-label-dark">{{ $item['nomer_id'] }}</span></td>
-            <td><strong>{{ $item['nama_lengkap'] }}</strong></td>
-            <td>{{ $item['no_whatsapp'] }}</td>
-            <td>
-              <span class="{{ $badgeClass }}">{{ ucfirst($status ?: '-') }}</span>
-            </td>
-            <td>{{ $item['paket']['nama_paket'] ?? '-' }}</td>
-            <td><strong>Rp {{ number_format($item['paket']['harga'] ?? 0, 0, ',', '.') }}</strong></td>
-            <td>
-              <div class="d-flex gap-2">
-                <button type="button"
-                  class="btn btn-sm btn-outline-primary"
-                  data-bs-toggle="modal"
-                  data-bs-target="#modalEditTagihan-{{ $item['id'] }}"
-                  title="Edit">
-                  <i class="ri-edit-2-line"></i>
-                </button>
-
-                <form action="{{ route('tagihan.destroy', $item['id']) }}" method="POST" class="delete-form d-inline">
-                  @csrf
-                  @method('DELETE')
-                  <button type="submit" class="btn btn-sm btn-outline-danger" title="Hapus">
-                    <i class="ri-delete-bin-line"></i>
-                  </button>
-                </form>
-
-        
-              </div>
-            </td>
-          </tr>
-          @endforeach
-        </tbody>
-      </table>
-    </div>
+    @if($tagihans->hasPages())
+      <div class="pagination-wrapper">
+        <div class="pagination-info">
+          Menampilkan <strong>{{ $tagihans->firstItem() ?? 0 }}</strong> - <strong>{{ $tagihans->lastItem() ?? 0 }}</strong>
+          dari <strong>{{ $tagihans->total() }}</strong> tagihan
+        </div>
+        <div>
+          {{ $tagihans->appends(request()->query())->onEachSide(1)->links('pagination::bootstrap-5') }}
+        </div>
+      </div>
+    @endif
   </div>
 </div>
 
-<!-- ========================================= -->
-<!-- MODAL: DETAIL PELANGGAN -->
-<!-- ========================================= -->
+{{-- MODAL DETAIL --}}
 <div class="modal fade" id="detailModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered modal-lg">
     <div class="modal-content">
@@ -1045,6 +1246,7 @@ $(document).on('submit', '.delete-form', function(e) {
     </div>
   </div>
 </div>
+
 
 <!-- ========================================= -->
 <!-- MODAL: TAMBAH TAGIHAN -->
@@ -1226,7 +1428,7 @@ $(document).on('submit', '.delete-form', function(e) {
             <div class="col-12">
               <label class="form-label">Upload Bukti Pembayaran (Opsional)</label>
               <input type="file" name="bukti_pembayaran" class="form-control" accept="image/*,.pdf">
-              <small class="text-muted">Format: JPG, PNG, PDF (Max: 2MB)</small>
+              <small class="text-muted">Format: JPG, PNG, PDF | Max: 2MB</small>
             </div>
           </div>
         </div>
@@ -1247,7 +1449,7 @@ $(document).on('submit', '.delete-form', function(e) {
 <!-- ========================================= -->
 <!-- MODAL: EDIT TAGIHAN (FOREACH) -->
 <!-- ========================================= -->
-@foreach ($tagihans as $tagihan)
+@foreach($tagihans as $tagihan)
 <div class="modal fade" id="modalEditTagihan-{{ $tagihan['id'] }}" tabindex="-1">
   <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content">
@@ -1268,6 +1470,7 @@ $(document).on('submit', '.delete-form', function(e) {
               <label class="form-label fw-semibold">Nama Pelanggan</label>
               <input type="text" class="form-control bg-light" value="{{ $tagihan['nama_lengkap'] ?? '-' }}" readonly>
             </div>
+
             <input type="hidden" name="pelanggan_id" value="{{ $tagihan['pelanggan_id'] ?? '' }}">
             <input type="hidden" name="paket_id" value="{{ $tagihan['paket']['id'] ?? '' }}">
 
@@ -1289,7 +1492,7 @@ $(document).on('submit', '.delete-form', function(e) {
             <div class="col-12">
               <label class="form-label">Bukti Pembayaran</label>
               <input type="file" name="bukti_pembayaran" class="form-control" accept="image/*,.pdf">
-              <small class="text-muted">Format: JPG, PNG, PDF (Max: 2MB)</small>
+              <small class="text-muted">Format: JPG, PNG, PDF | Max: 2MB</small>
             </div>
           </div>
         </div>
@@ -1331,11 +1534,11 @@ $(document).on('submit', '.delete-form', function(e) {
           </div>
 
           <div class="border rounded p-3 mb-3" style="max-height: 200px; overflow-y: auto; background: #f8f9fa;">
-            @foreach ($pelanggan as $p)
-              <div class="py-2 border-bottom">
-                <span class="badge bg-dark me-2">{{ $p->nomer_id }}</span>
-                <strong>{{ $p->nama_lengkap }}</strong>
-              </div>
+            @foreach($pelanggan as $p)
+            <div class="py-2 border-bottom">
+              <span class="badge bg-dark me-2">{{ $p->nomer_id }}</span>
+              <strong>{{ $p->nama_lengkap }}</strong>
+            </div>
             @endforeach
           </div>
 
@@ -1365,5 +1568,5 @@ $(document).on('submit', '.delete-form', function(e) {
     </div>
   </div>
 </div>
-
 @endsection
+

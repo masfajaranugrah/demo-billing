@@ -1,6 +1,6 @@
 @extends('layouts/layoutMaster')
 
-@section('title', 'Tagihan Belum Bayar - Push Notification')
+@section('title', 'Push Notification')
 
 @section('vendor-style')
 @vite([
@@ -122,7 +122,7 @@
         <div class="d-flex flex-wrap justify-content-between align-items-center">
             <div>
                 <h4 class="mb-1 fw-bold">
-                    <i class="ri-bill-line me-2"></i>Daftar Tagihan Belum Bayar
+                    <i class="ri-bill-line me-2"></i>Daftar Tagihan Belum Bayar ya
                 </h4>
                 <p class="mb-0 opacity-75 small">Kelola dan kirim notifikasi tagihan ke pelanggan</p>
             </div>
@@ -189,25 +189,30 @@
 <script>
 document.addEventListener("DOMContentLoaded", function() {
     // Inisialisasi DataTable
-    const dtTagihan = $('.datatables-rekenings').DataTable({
+  const dtTagihan = $('.datatables-rekenings').DataTable({
         paging: true,
         pageLength: 10,
-        lengthMenu: [5, 10, 25, 50, 100],
+        lengthMenu: [[5, 10, 25, 50,400], [5, 10, 25, 50,400]],
+        lengthChange: true,
         searching: true,
         ordering: true,
         info: true,
         responsive: true,
+        // ? TAMBAHKAN INI - Huruf 'l' untuk length menu
+        dom: 'lfrtip',
         columnDefs: [
             { orderable: false, targets: [] }
         ],
         language: {
+            lengthMenu: "Tampilkan _MENU_ data per halaman",
+            info: "Menampilkan _START_ sampai _END_ dari _TOTAL_ data",
+            search: "Cari:",
             paginate: {
                 previous: '<i class="ri-arrow-left-s-line"></i>',
                 next: '<i class="ri-arrow-right-s-line"></i>'
             }
         }
     });
-
     // Fungsi helper untuk menampilkan loading
     function showLoading() {
         $('.loading-overlay').css('display', 'flex');

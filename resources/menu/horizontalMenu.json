@@ -232,7 +232,17 @@
             "admin"
           ],
           "icon": "ri-check-line"
-        }
+        },
+            {
+          "url": "/dashboard/admin/tagihan/outstanding",
+          "name": "Outstanding",
+          "slug": "app-user-list",
+          "roles": [
+            "administrator",
+            "admin"
+          ],
+          "icon": "ri-list-check"
+        },
       ]
     },
     {

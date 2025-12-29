@@ -408,6 +408,118 @@ body {
     font-weight: 600 !important;
     padding: 10px 24px !important;
 }
+
+/* Badge Tunggakan dengan Animasi Ring + Shake */
+.badge-tunggakan {
+    position: relative;
+    background: #dc2626;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    z-index: 1;
+    
+    /* Gabungan animasi shake dan pulse */
+    animation: shake 0.8s ease-in-out infinite, pulse-badge 2s ease-in-out infinite;
+}
+
+.badge-tunggakan i {
+    font-size: 0.875rem;
+}
+
+/* Efek Ring Berdering (Pulse Ring) */
+.badge-tunggakan::before {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 8px;
+    border: 2px solid #dc2626;
+    opacity: 0.7;
+    z-index: -1;
+    animation: pulse-ring 2s ease-out infinite;
+}
+
+/* Ring kedua untuk efek lebih dramatis */
+.badge-tunggakan::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 8px;
+    border: 2px solid #dc2626;
+    opacity: 0;
+    z-index: -1;
+    animation: pulse-ring 2s 0.5s ease-out infinite;
+}
+
+/* Keyframe: Pulse Ring - Efek Berdering */
+@keyframes pulse-ring {
+    0% {
+        transform: scale(1);
+        opacity: 0.7;
+    }
+    50% {
+        transform: scale(1.15);
+        opacity: 0.4;
+    }
+    100% {
+        transform: scale(1.3);
+        opacity: 0;
+    }
+}
+
+/* Keyframe: Shake - Efek Bergetar */
+@keyframes shake {
+    0%, 100% {
+        transform: translateX(0) rotate(0deg);
+    }
+    10%, 30%, 50%, 70%, 90% {
+        transform: translateX(-2px) rotate(-1deg);
+    }
+    20%, 40%, 60%, 80% {
+        transform: translateX(2px) rotate(1deg);
+    }
+}
+
+/* Keyframe: Pulse Badge - Efek Zoom Halus */
+@keyframes pulse-badge {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+/* Hover: Stop semua animasi */
+.badge-tunggakan:hover {
+    animation: none;
+}
+
+.badge-tunggakan:hover::before,
+.badge-tunggakan:hover::after {
+    animation: none;
+    opacity: 0;
+}
+
+/* Responsive untuk mobile */
+@media (max-width: 480px) {
+    .badge-tunggakan {
+        padding: 6px 12px;
+        font-size: 0.75rem;
+    }
+    
+    .badge-tunggakan::before,
+    .badge-tunggakan::after {
+        inset: -3px;
+        border-width: 1.5px;
+    }
+}
+
 </style>
 </head>
 
@@ -429,10 +541,33 @@ body {
 
     <div class="card card-invoice {{ $isPriority ? 'priority' : '' }}">
 
-        <div class="card-header-invoice">
-            <h5>Invoice Tagihan</h5>
-            <small>PT. Jernih Multi Komunikasi</small>
-        </div>
+
+@php
+    $jatuhTempo = \Carbon\Carbon::parse($tagihan->tanggal_berakhir);
+    $sekarang = \Carbon\Carbon::now();
+    
+    // Cek apakah sudah lewat bulan (bukan hanya tanggal)
+    // Tunggakan = jatuh tempo di bulan sebelumnya atau lebih lama
+    $isPastMonth = $jatuhTempo->format('Y-m') < $sekarang->format('Y-m');
+    
+    $isUnpaid = $tagihan->status_pembayaran !== 'lunas' && $tagihan->status_pembayaran !== 'proses_verifikasi';
+    
+    // Tunggakan muncul hanya jika: belum bayar DAN sudah lewat bulan
+    $isTunggakan = $isUnpaid && $isPastMonth;
+@endphp
+
+<div class="card-header-invoice d-flex justify-content-between align-items-center">
+    <div>
+        <h5>Invoice Tagihan</h5>
+        <small>PT. Jernih Multi Komunikasi</small>
+    </div>
+    
+    @if($isTunggakan)
+        <span class="badge-tunggakan">
+            <i class="bi bi-exclamation-triangle-fill"></i> Tunggakan
+        </span>
+    @endif
+</div>
 
         <div class="card-body">
 
@@ -461,9 +596,11 @@ body {
           </div>
 
           <div class="price-section">
-              <p class="period-label">
+   <!-- <p class="period-label">
                   Periode: {{ \Carbon\Carbon::parse($tagihan->tanggal_berakhir)->translatedFormat('F Y') }}
-              </p>
+              </p> -->
+              <p class="period-label">
+                  Periode: Desember 2025              </p>
 
               <div class="price-amount">
                   Rp {{ number_format($paket->harga ?? 0, 0, ',', '.') }}

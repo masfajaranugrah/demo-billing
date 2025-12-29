@@ -237,7 +237,7 @@ try {
 }
 
 
- 
+
 
     /**
      * Contoh fungsi helper untuk kirim WA (dummy)
@@ -249,147 +249,154 @@ try {
         return true;
     }
 
-    public function index()
-    {
-        // Ambil semua pelanggan & paket untuk dropdown modal
-        $pelanggan = Pelanggan::where('status', 'approve')
-            ->whereDoesntHave('tagihans', function ($q) {
-                $q->where('status_pembayaran', 'belum bayar');
-            })->get();
 
-        $paket = Paket::all();
+public function index(Request $request)
+{
+    // Ambil semua pelanggan & paket untuk dropdown modal
+    $pelanggan = Pelanggan::where('status', 'approve')
+        ->whereDoesntHave('tagihans', function ($q) {
+            $q->where('status_pembayaran', 'belum bayar');
+        })
+        ->get();
 
-        // Ambil semua tagihan dengan status "belum bayar" beserta relasinya
-        $tagihans = Tagihan::with(['pelanggan', 'paket'])
-            ->where('status_pembayaran', 'belum bayar') // FILTER DISINI
-            ->orderBy('created_at', 'desc')
-            ->get()
-            ->map(function ($item) {
-                $pelanggan = $item->pelanggan;
-                $paket = $item->paket;
+    $paket = Paket::all();
 
-                return [
-                    'id' => $item->id,
-                    'nomer_id' => $pelanggan->nomer_id ?? '-',
-                    'nama_lengkap' => $pelanggan->nama_lengkap ?? '-',
-                    'alamat_jalan' => $pelanggan->alamat_jalan ?? '-',
-                    'rt' => $pelanggan->rt ?? '-',
-                    'rw' => $pelanggan->rw ?? '-',
-                    'desa' => $pelanggan->desa ?? '-',
-                    'kecamatan' => $pelanggan->kecamatan ?? '-',
-                    'kabupaten' => $pelanggan->kabupaten ?? '-',
-                    'provinsi' => $pelanggan->provinsi ?? '-',
-                    'kode_pos' => $pelanggan->kode_pos ?? '-',
-                    'paket' => [
-                        'id' => $paket->id ?? null,
-                        'nama_paket' => $paket->nama_paket ?? '-',
-                        'harga' => $paket->harga ?? 0,
-                        'kecepatan' => $paket->kecepatan ?? 0,
-                        'masa_pembayaran' => $paket->masa_pembayaran ?? 0,
-                        'durasi' => $paket->durasi ?? 0,
-                    ],
-                    'tanggal_mulai' => $item->tanggal_mulai ?? null,
-                    'tanggal_berakhir' => $item->tanggal_berakhir ?? null,
-                    'status_pembayaran' => $item->status_pembayaran ?? 'belum bayar',
-                    'tanggal_pembayaran' => $item->tanggal_pembayaran ?? '-',
-                    'bukti_pembayaran' => $item->bukti_pembayaran ?? '-',
-                    'no_whatsapp' => $pelanggan->no_whatsapp ?? '08xxxxxxxxxx',
-                    'catatan' => $item->catatan ?? '-',
-                ];
-            });
+    // ? BUILD QUERY
+    $query = Tagihan::with(['pelanggan', 'paket']);
 
-        // Ambil list unik untuk filter dropdown
-        $kabupatenList = $pelanggan->pluck('kabupaten')->unique();
-        $kecamatanList = $pelanggan->pluck('kecamatan')->unique();
-
-        // Statistik
-        $totalCustomer = $pelanggan->count();
-        $lunas = 0; // Karena kita hanya menampilkan "belum bayar"
-        $belumLunas = $tagihans->count();
-        $totalPaket = $paket->count();
-
-        return view('content.apps.Tagihan.tagihan', compact(
-            'tagihans',
-            'pelanggan',
-            'paket',
-            'totalCustomer',
-            'lunas',
-            'belumLunas',
-            'totalPaket',
-            'kabupatenList',
-            'kecamatanList'
-        ));
+    // ? SEARCH FILTER - HANYA DI STATUS "BELUM BAYAR"
+    if ($request->filled('search')) {
+        $search = trim($request->search);
+        
+        // ? HARDCODE: Hanya cari di status "belum bayar"
+        $query->where('status_pembayaran', 'belum bayar')
+              ->whereHas('pelanggan', function($q) use ($search) {
+                  $q->where('nama_lengkap', 'like', "%{$search}%")
+                    ->orWhere('nomer_id', 'like', "%{$search}%")          // Cari di No. ID
+                    ->orWhere('no_whatsapp', 'like', "%{$search}%")       // Cari di WhatsApp
+                    ->orWhere('no_telp', 'like', "%{$search}%")           // Cari di Telepon
+                    ->orWhere('alamat_jalan', 'like', "%{$search}%")      // Cari di Alamat
+                    ->orWhere('rt', 'like', "%{$search}%")                // Cari di RT
+                    ->orWhere('rw', 'like', "%{$search}%")                // Cari di RW
+                    ->orWhere('desa', 'like', "%{$search}%")              // Cari di Desa
+                    ->orWhere('kecamatan', 'like', "%{$search}%")         // Cari di Kecamatan
+                    ->orWhere('kabupaten', 'like', "%{$search}%")         // Cari di Kabupaten
+                    ->orWhere('kode_pos', 'like', "%{$search}%");         // Cari di Kode Pos
+              });
+    } else {
+        // ? JIKA TIDAK ADA SEARCH, TAMPILKAN SEMUA (DENGAN FILTER STATUS JIKA ADA)
+        if ($request->filled('status')) {
+            $query->where('status_pembayaran', $request->status);
+        }
     }
 
-    public function proses()
-    {
-        // Ambil semua pelanggan & paket untuk dropdown modal
-        $pelanggan = Pelanggan::all();
-        $paket = Paket::all();
+    // ? FILTER KABUPATEN & KECAMATAN DIHAPUS
 
-        // Ambil semua tagihan dengan status "belum bayar" beserta relasinya
-        $tagihans = Tagihan::with(['pelanggan', 'paket'])
-            ->where('status_pembayaran', 'proses_verifikasi') // FILTER DISINI
-            ->orderBy('created_at', 'desc')
-            ->get()
-            ->map(function ($item) {
-                $pelanggan = $item->pelanggan;
-                $paket = $item->paket;
+    // ? PAGINATION
+    $tagihans = $query->orderBy('created_at', 'desc')
+        ->paginate(40)
+        ->withQueryString()
+        ->through(function ($item) {
+            $pelanggan = $item->pelanggan;
+            $paket = $item->paket;
 
-                return [
-                    'id' => $item->id,
-                    'nomer_id' => $pelanggan->nomer_id ?? '-',
-                    'nama_lengkap' => $pelanggan->nama_lengkap ?? '-',
-                    'alamat_jalan' => $pelanggan->alamat_jalan ?? '-',
-                    'rt' => $pelanggan->rt ?? '-',
-                    'rw' => $pelanggan->rw ?? '-',
-                    'desa' => $pelanggan->desa ?? '-',
-                    'kecamatan' => $pelanggan->kecamatan ?? '-',
-                    'kabupaten' => $pelanggan->kabupaten ?? '-',
-                    'provinsi' => $pelanggan->provinsi ?? '-',
-                    'kode_pos' => $pelanggan->kode_pos ?? '-',
-                    'paket' => [
-                        'id' => $paket->id ?? null,
-                        'nama_paket' => $paket->nama_paket ?? '-',
-                        'harga' => $paket->harga ?? 0,
-                        'kecepatan' => $paket->kecepatan ?? 0,
-                        'masa_pembayaran' => $paket->masa_pembayaran ?? 0,
-                        'durasi' => $paket->durasi ?? 0,
-                    ],
-                    'tanggal_mulai' => $item->tanggal_mulai ?? null,
-                    'tanggal_berakhir' => $item->tanggal_berakhir ?? null,
-                    'status_pembayaran' => $item->status_pembayaran ?? 'belum bayar',
-                    'tanggal_pembayaran' => $item->tanggal_pembayaran ?? '-',
-                    'bukti_pembayaran' => $item->bukti_pembayaran ?? '-',
-                    'no_whatsapp' => $pelanggan->no_whatsapp ?? '08xxxxxxxxxx',
-                    'catatan' => $item->catatan ?? '-',
-                ];
-            });
+            return [
+                'id' => $item->id,
+                'pelanggan_id' => $item->pelanggan_id,
+                'nomer_id' => $pelanggan->nomer_id ?? '-',
+                'nama_lengkap' => $pelanggan->nama_lengkap ?? '-',
+                'alamat_jalan' => $pelanggan->alamat_jalan ?? '-',
+                'rt' => $pelanggan->rt ?? '-',
+                'rw' => $pelanggan->rw ?? '-',
+                'desa' => $pelanggan->desa ?? '-',
+                'kecamatan' => $pelanggan->kecamatan ?? '-',
+                'kabupaten' => $pelanggan->kabupaten ?? '-',
+                'provinsi' => $pelanggan->provinsi ?? '-',
+                'kode_pos' => $pelanggan->kode_pos ?? '-',
+                'paket' => [
+                    'id' => $paket->id ?? null,
+                    'nama_paket' => $paket->nama_paket ?? '-',
+                    'harga' => $paket->harga ?? 0,
+                    'kecepatan' => $paket->kecepatan ?? 0,
+                    'masa_pembayaran' => $paket->masa_pembayaran ?? 0,
+                    'durasi' => $paket->durasi ?? 0,
+                ],
+                'tanggal_mulai' => $item->tanggal_mulai,
+                'tanggal_berakhir' => $item->tanggal_berakhir,
+                'status_pembayaran' => $item->status_pembayaran ?? 'belum bayar',
+                'tanggal_pembayaran' => $item->tanggal_pembayaran ?? '-',
+                'bukti_pembayaran' => $item->bukti_pembayaran ?? '-',
+                'no_whatsapp' => $pelanggan->no_whatsapp ?? '08xxxxxxxxxx',
+                'catatan' => $item->catatan ?? '-',
+            ];
+        });
 
-        // Ambil list unik untuk filter dropdown
-        $kabupatenList = $pelanggan->pluck('kabupaten')->unique();
-        $kecamatanList = $pelanggan->pluck('kecamatan')->unique();
+    // ? List kabupaten & kecamatan juga dihapus (tidak perlu lagi)
+    // $kabupatenList = ...
+    // $kecamatanList = ...
 
-        // Statistik
-        $totalCustomer = $pelanggan->count();
-        $lunas = 0; // Karena kita hanya menampilkan "belum bayar"
-        $belumLunas = $tagihans->count();
-        $totalPaket = $paket->count();
+    // Statistik
+    $totalCustomer = Pelanggan::where('status', 'approve')->count();
+    $lunas = Tagihan::where('status_pembayaran', 'lunas')->count();
+    $belumLunas = Tagihan::where('status_pembayaran', 'belum bayar')->count();
+    $totalPaket = $paket->count();
 
-        return view('content.apps.Tagihan.proses-tagihan', compact(
-            'tagihans',
-            'pelanggan',
-            'paket',
-            'totalCustomer',
-            'lunas',
-            'belumLunas',
-            'totalPaket',
-            'kabupatenList',
-            'kecamatanList'
-        ));
-    }
+    // ? RETURN VIEW HTML (tanpa kabupatenList & kecamatanList)
+    return view('content.apps.Tagihan.tagihan', [
+        'tagihans' => $tagihans,
+        'pelanggan' => $pelanggan,
+        'paket' => $paket,
+        'totalCustomer' => $totalCustomer,
+        'lunas' => $lunas,
+        'belumLunas' => $belumLunas,
+        'totalPaket' => $totalPaket,
+        // ? kabupatenList & kecamatanList dihapus
+    ]);
+}
 
-   public function lunas()
+
+
+public function proses()
+{
+    // Ambil semua pelanggan & paket untuk dropdown modal
+    $pelanggan = Pelanggan::all();
+    $paket = Paket::all();
+
+    // Query dengan pagination - 20 data per page (TANPA through/map)
+    $tagihans = Tagihan::with(['pelanggan', 'paket'])
+        ->where('status_pembayaran', 'proses_verifikasi')
+        ->orderBy('created_at', 'desc')
+        ->paginate(20); // HANYA INI SAJA, JANGAN PAKAI through() atau map()
+
+    // Ambil list unik untuk filter dropdown
+    $kabupatenList = $pelanggan->pluck('kabupaten')->unique();
+    $kecamatanList = $pelanggan->pluck('kecamatan')->unique();
+
+    // Statistik
+    $totalCustomer = $pelanggan->count();
+    $lunas = 0;
+    $belumLunas = Tagihan::where('status_pembayaran', 'proses_verifikasi')->count();
+    $totalPaket = $paket->count();
+
+    return view('content.apps.Tagihan.proses-tagihan', compact(
+        'tagihans',
+        'pelanggan',
+        'paket',
+        'totalCustomer',
+        'lunas',
+        'belumLunas',
+        'totalPaket',
+        'kabupatenList',
+        'kecamatanList'
+    ));
+}
+
+
+
+
+
+
+public function lunas()
 {
     // Ambil semua pelanggan & paket untuk dropdown modal
     $pelanggan = Pelanggan::all();
@@ -404,7 +411,7 @@ try {
             $pelanggan = $item->pelanggan;
             $paket = $item->paket;
 
-           
+
 $kwitansiUrl = null;
 if (!empty($item->kwitansi)) {
     $kwitansiUrl = $item->kwitansi;
@@ -432,6 +439,8 @@ if (!empty($item->kwitansi)) {
                 'tanggal_mulai' => $item->tanggal_mulai ?? null,
                 'tanggal_berakhir' => $item->tanggal_berakhir ?? null,
                 'status_pembayaran' => $item->status_pembayaran ?? 'belum bayar',
+ 		 'type_pembayaran' => $item->rekening->nama_bank ?? '-',
+
                 'tanggal_pembayaran' => $item->tanggal_pembayaran ?? '-',
                 'bukti_pembayaran' => $item->bukti_pembayaran ?? '-',
                 'kwitansi' => $kwitansiUrl,
@@ -574,7 +583,7 @@ public function store(Request $request)
 
         $response = curl_exec($ch);
 
-       
+
 
         curl_close($ch);
     }
@@ -670,66 +679,49 @@ public function store(Request $request)
         return redirect()->back()->with('success', '??? Tagihan berhasil dihapus!');
     }
 
-    public function massStore(Request $request)
-    {
-        $request->validate([
-            'tanggal_mulai' => 'required|date',
-            'tanggal_berakhir' => 'required|date|after_or_equal:tanggal_mulai',
-        ]);
+ public function massStore(Request $request)
+{
+    $request->validate([
+        'tanggal_mulai' => 'required|date',
+        'tanggal_berakhir' => 'required|date|after_or_equal:tanggal_mulai',
+    ]);
 
-        $pelanggan = Pelanggan::with('paket')
-            ->whereDoesntHave('tagihans', function ($q) {
-                $q->where('status_pembayaran', 'belum bayar');
-            })
-            ->get();
-        if ($pelanggan->count() == 0) {
-            return back()->with('error', 'Tidak ada pelanggan untuk dibuatkan tagihan.');
-        }
+    // Ambil MAX 100 pelanggan yang BELUM PUNYA TAGIHAN BELUM BAYAR
+    $pelanggan = Pelanggan::with('paket')
+        ->where('status', 'approve')
+        ->whereNotIn('id', function ($query) {
+            $query->select('pelanggan_id')
+                  ->from('tagihans')
+                  ->where('status_pembayaran', 'belum bayar');
+        })
+        ->limit(100)
+        ->get();
 
-        DB::beginTransaction();
-
-        try {
-            foreach ($pelanggan as $p) {
-                Tagihan::create([
-                    'pelanggan_id' => $p->id,
-                    'paket_id' => $p->paket_id,
-                    'nama_lengkap' => $p->nama_lengkap,
-                    'nomer_id' => $p->nomer_id,
-                    'no_whatsapp' => $p->no_whatsapp,
-
-                    // Alamat
-                    'alamat_jalan' => $p->alamat_jalan,
-                    'rt' => $p->rt,
-                    'rw' => $p->rw,
-                    'desa' => $p->desa,
-                    'kecamatan' => $p->kecamatan,
-                    'kabupaten' => $p->kabupaten,
-                    'provinsi' => $p->provinsi,
-                    'kode_pos' => $p->kode_pos,
-
-                    // Paket
-                    'harga' => $p->paket->harga,
-                    'kecepatan' => $p->paket->kecepatan,
-                    'masa_pembayaran' => $p->paket->masa_pembayaran,
-
-                    // Tanggal
-                    'tanggal_mulai' => $request->tanggal_mulai,
-                    'tanggal_berakhir' => $request->tanggal_berakhir,
-
-                    // Default
-                    'status_pembayaran' => 'belum bayar',
-                ]);
-            }
-
-            DB::commit();
-
-            return back()->with('success', 'Tagihan berhasil dibuat untuk semua pelanggan!');
-        } catch (\Throwable $th) {
-            DB::rollBack();
-
-            return back()->with('error', 'Gagal membuat tagihan massal: '.$th->getMessage());
-        }
+    if ($pelanggan->isEmpty()) {
+        return back()->with('error', 'Tidak ada pelanggan yang bisa dibuatkan tagihan.');
     }
+
+    DB::beginTransaction();
+    try {
+        foreach ($pelanggan as $p) {
+            Tagihan::create([
+                'pelanggan_id' => $p->id,
+                'paket_id' => $p->paket_id,
+                'harga' => $p->paket->harga,
+                'tanggal_mulai' => $request->tanggal_mulai,
+                'tanggal_berakhir' => $request->tanggal_berakhir,
+                'status_pembayaran' => 'belum bayar',
+            ]);
+        }
+
+        DB::commit();
+        return back()->with('success', 'Berhasil membuat tagihan untuk 100 pelanggan berikutnya.');
+    } catch (\Throwable $e) {
+        DB::rollBack();
+        return back()->with('error', $e->getMessage());
+    }
+}
+
 
 
 
@@ -827,7 +819,7 @@ public function outstanding(Request $request)
         $totalBelumBayar = Tagihan::where('status_pembayaran', 'belum bayar')->count();
         $totalProses = Tagihan::where('status_pembayaran', 'proses_verifikasi')->count();
         $totalLunas = Tagihan::where('status_pembayaran', 'lunas')->count();
-        
+
         // Total tagihan yang overdue (lewat tanggal jatuh tempo)
         $totalOverdue = Tagihan::where('status_pembayaran', '!=', 'lunas')
             ->where('tanggal_berakhir', '<', now())
@@ -863,7 +855,7 @@ public function outstanding(Request $request)
 
     // ? Bulan untuk filter
     $bulanList = [
-        1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 
+        1 => 'Januari', 2 => 'Februari', 3 => 'Maret',
         4 => 'April', 5 => 'Mei', 6 => 'Juni',
         7 => 'Juli', 8 => 'Agustus', 9 => 'September',
         10 => 'Oktober', 11 => 'November', 12 => 'Desember'

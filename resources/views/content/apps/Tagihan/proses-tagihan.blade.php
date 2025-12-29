@@ -1,13 +1,9 @@
 @extends('layouts/layoutMaster')
 
-@section('title', 'Tagihan - Apps')
-
+@section('title', 'Proses Verifikasi Tagihan')
 
 @section('vendor-style')
 @vite([
-  'resources/assets/vendor/libs/datatables-bs5/datatables.bootstrap5.scss',
-  'resources/assets/vendor/libs/datatables-responsive-bs5/responsive.bootstrap5.scss',
-  'resources/assets/vendor/libs/datatables-buttons-bs5/buttons.bootstrap5.scss',
   'resources/assets/vendor/libs/select2/select2.scss',
   'resources/assets/vendor/libs/sweetalert2/sweetalert2.scss',
   'resources/assets/vendor/libs/flatpickr/flatpickr.scss',
@@ -21,6 +17,8 @@
   --card-hover-shadow: 0 4px 16px rgba(0,0,0,0.12);
   --border-radius: 12px;
   --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --primary-color: #696cff;
+  --success-color: #28c76f;
 }
 
 .card {
@@ -366,6 +364,41 @@
   z-index: 999;
 }
 
+/* Pagination Laravel */
+.pagination {
+  margin: 0;
+  gap: 0.5rem;
+}
+
+.pagination .page-item .page-link {
+  border-radius: 8px !important;
+  margin: 0 2px;
+  border: 1px solid #e0e0e0;
+  color: #696cff;
+  padding: 0.5rem 0.875rem;
+  font-weight: 500;
+  transition: var(--transition);
+}
+
+.pagination .page-item .page-link:hover {
+  background: #696cff;
+  color: white;
+  border-color: #696cff;
+  transform: translateY(-2px);
+}
+
+.pagination .page-item.active .page-link {
+  background: linear-gradient(135deg, #696cff 0%, #5a5dc9 100%);
+  border-color: #696cff;
+  color: white;
+  box-shadow: 0 2px 8px rgba(105, 108, 255, 0.3);
+}
+
+.pagination .page-item.disabled .page-link {
+  background: #f8f9fa;
+  color: #8898aa;
+}
+
 @media (max-width: 768px) {
   .modal-body {
     padding: 1.5rem;
@@ -382,7 +415,6 @@
 
 @section('vendor-script')
 @vite([
-  'resources/assets/vendor/libs/datatables-bs5/datatables-bootstrap5.js',
   'resources/assets/vendor/libs/select2/select2.js',
   'resources/assets/vendor/libs/sweetalert2/sweetalert2.js',
   'resources/assets/vendor/libs/flatpickr/flatpickr.js',
@@ -466,41 +498,6 @@ document.addEventListener("DOMContentLoaded", function () {
         const list = $('#pelangganSelect option').filter((_, el) => el.value);
         if (list.length === 1) {
             $('#pelangganSelect').val(list.val()).trigger('change');
-        }
-    });
-
-    // ========================================
-    // DATATABLES - WITH ACTIONS COLUMN
-    // ========================================
-    const dtUserTable = $('.datatables-users').DataTable({
-        paging: true,
-        pageLength: 10,
-        lengthMenu: [5, 10, 25, 50, 100],
-        searching: true,
-        ordering: true,
-        responsive: false,
-        scrollX: false,
-        autoWidth: false,
-        dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>rtip',
-        columnDefs: [
-            { orderable: false, targets: [0, -1] },
-            { width: '60px', targets: 0 },
-            { width: '100px', targets: 1 },
-            { width: '200px', targets: -1 },
-            { width: 'auto', targets: '_all' }
-        ],
-        language: {
-            paginate: {
-                previous: '<i class="ri-arrow-left-s-line"></i>',
-                next: '<i class="ri-arrow-right-s-line"></i>'
-            },
-            search: "_INPUT_",
-            searchPlaceholder: "Cari tagihan...",
-            lengthMenu: "Tampilkan _MENU_ data",
-            info: "Menampilkan _START_ - _END_ dari _TOTAL_ tagihan",
-            infoEmpty: "Tidak ada data",
-            infoFiltered: "(difilter dari _MAX_ total data)",
-            zeroRecords: "Tidak ada data yang sesuai"
         }
     });
 
@@ -671,14 +668,10 @@ document.addEventListener("DOMContentLoaded", function () {
             html: `<p class="mb-0">Apakah <strong>${nama}</strong> sudah melakukan pembayaran?</p>`,
             icon: 'question',
             showCancelButton: true,
-            showConfirmButton: true,
-            showDenyButton: false,
             confirmButtonColor: '#2dce89',
             cancelButtonColor: '#8898aa',
             confirmButtonText: '<i class="ri-check-line me-1"></i>Ya, Lunas',
             cancelButtonText: 'Batal',
-            allowOutsideClick: false,
-            allowEscapeKey: false,
             reverseButtons: true,
             customClass: {
                 confirmButton: 'btn btn-success me-2',
@@ -740,14 +733,10 @@ document.addEventListener("DOMContentLoaded", function () {
             html: `<p class="mb-0">Apakah <strong>${nama}</strong> sudah melakukan pembayaran?</p>`,
             icon: 'question',
             showCancelButton: true,
-            showConfirmButton: true,
-            showDenyButton: false,
             confirmButtonColor: '#2dce89',
             cancelButtonColor: '#8898aa',
             confirmButtonText: '<i class="ri-check-line me-1"></i>Ya, Lunas',
             cancelButtonText: 'Batal',
-            allowOutsideClick: false,
-            allowEscapeKey: false,
             reverseButtons: true,
             customClass: {
                 confirmButton: 'btn btn-success me-2',
@@ -806,14 +795,10 @@ document.addEventListener("DOMContentLoaded", function () {
             html: '<p class="mb-0">Yakin ingin menghapus tagihan ini?<br><strong class="text-danger">Data tidak dapat dikembalikan!</strong></p>',
             icon: 'warning',
             showCancelButton: true,
-            showConfirmButton: true,
-            showDenyButton: false,
             confirmButtonColor: '#f5365c',
             cancelButtonColor: '#8898aa',
             confirmButtonText: '<i class="ri-delete-bin-line me-1"></i>Hapus',
             cancelButtonText: 'Batal',
-            allowOutsideClick: false,
-            allowEscapeKey: false,
             reverseButtons: true,
             customClass: {
                 confirmButton: 'btn btn-danger me-2',
@@ -826,13 +811,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 setTimeout(() => form.submit(), 500);
             }
         });
-    });
-
-    // ========================================
-    // FILTERS
-    // ========================================
-    $('#statusPembayaranFilter').on('change', function() {
-        dtUserTable.column(4).search($(this).val().toLowerCase()).draw();
     });
 
     // ========================================
@@ -868,101 +846,151 @@ document.addEventListener("DOMContentLoaded", function () {
 </div>
 
 <div class="container-fluid px-4 py-4">
-  <!-- Daftar Tagihan -->
+  <!-- ========================================= -->
+  <!-- DAFTAR TAGIHAN PROSES VERIFIKASI -->
+  <!-- ========================================= -->
   <div class="card">
     <div class="card-header">
-      <div class="d-flex justify-content-between align-items-center">
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
         <div>
-          <h5 class="mb-1">
-            <i class="ri-file-list-3-line me-2 text-primary"></i>
-            Daftar Tagihan
+          <h5 class="mb-1 fw-bold">
+            <i class="ri-file-list-3-line me-2 text-warning"></i>
+            Tagihan Proses Verifikasi
           </h5>
-          <small class="text-muted">Kelola seluruh tagihan pelanggan</small>
+          <small class="text-muted">Kelola tagihan yang sedang dalam proses verifikasi pembayaran</small>
         </div>
-       
+        
+        @if($tagihans->total() > 0)
+        <div>
+          <span class="badge bg-label-warning" style="padding: 10px 20px; font-size: 0.9rem;">
+            <i class="ri-database-2-line me-1"></i>
+            {{ $tagihans->total() }} Tagihan
+          </span>
+        </div>
+        @endif
       </div>
     </div>
 
-    <div class="card-datatable table-responsive">
-      <table class="datatables-users table">
-        <thead>
-          <tr>
-            <th>Detail</th>
-            <th>No. ID</th>
-            <th>Nama</th>
-            <th>WhatsApp</th>
-            <th>Status</th>
-            <th>Paket</th>
-            <th>Harga</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          @foreach($tagihans as $item)
-          <tr 
-            data-tagihan-id="{{ $item['id'] }}"
-            data-alamat="{{ 
-              collect([
-                $item['alamat_jalan'],
-                ($item['rt'] || $item['rw']) ? 'RT '.$item['rt'].' / RW '.$item['rw'] : null,
-                $item['desa'] ? 'Desa '.$item['desa'] : null
-              ])->filter()->implode(', ')
-            }}"
-            data-kecamatan="{{ $item['kecamatan'] ?? '-' }}"
-            data-kabupaten="{{ $item['kabupaten'] ?? '-' }}"
-            data-provinsi="{{ $item['provinsi'] ?? '-' }}"
-            data-paket="{{ $item['paket']['nama_paket'] ?? '-' }}"
-            data-harga="Rp {{ number_format($item['paket']['harga'] ?? 0, 0, ',', '.') }}"
-            data-kecepatan="{{ $item['paket']['kecepatan'] ?? '-' }} Mbps"
-            data-tanggal-mulai="{{ $item['tanggal_mulai'] ? \Carbon\Carbon::parse($item['tanggal_mulai'])->format('d M Y') : '-' }}"
-            data-jatuh-tempo="{{ $item['tanggal_berakhir'] ? \Carbon\Carbon::parse($item['tanggal_berakhir'])->format('d M Y') : '-' }}"
-            data-catatan="{{ $item['catatan'] ?? '-' }}"
-            data-bukti="{{ !empty($item['bukti_pembayaran']) ? asset('storage/' . $item['bukti_pembayaran']) : '' }}"
-          >
-            <td>
-              <button class="btn btn-sm btn-icon btn-outline-primary btn-detail" title="Lihat Detail">
-                <i class="ri-eye-line"></i>
-              </button>
-            </td>
-            <td><span class="badge bg-label-dark">{{ $item['nomer_id'] }}</span></td>
-            <td><strong>{{ $item['nama_lengkap'] }}</strong></td>
-            <td>{{ $item['no_whatsapp'] }}</td>
-            <td>
-              @php
-                $status = strtolower($item['status_pembayaran'] ?? '');
-                $badgeClass = match($status) {
-                  'lunas' => 'badge bg-success',
-                  'proses_verifikasi' => 'badge bg-warning',
-                  default => 'badge bg-secondary',
-                };
-              @endphp
-              <span class="{{ $badgeClass }}">{{ ucfirst($status ?: 'Belum Bayar') }}</span>
-            </td>
-            <td>{{ $item['paket']['nama_paket'] ?? '-' }}</td>
-            <td><strong>Rp {{ number_format($item['paket']['harga'] ?? 0, 0, ',', '.') }}</strong></td>
-            <td>
-              <div class="d-flex gap-2 flex-wrap">
-                <!-- Tombol Edit -->
-               
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              <th><i class="ri-eye-line me-1"></i>Detail</th>
+              <th><i class="ri-barcode-line me-1"></i>No. ID</th>
+              <th><i class="ri-user-3-line me-1"></i>Nama</th>
+              <th><i class="ri-whatsapp-line me-1"></i>WhatsApp</th>
+              <th><i class="ri-shield-check-line me-1"></i>Status</th>
+              <th><i class="ri-box-3-line me-1"></i>Paket</th>
+              <th><i class="ri-money-dollar-circle-line me-1"></i>Harga</th>
+              <th><i class="ri-settings-3-line me-1"></i>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @forelse($tagihans as $item)
+            @php
+              $status = strtolower($item->status_pembayaran ?? '');
+              $badgeClass = match($status) {
+                'lunas' => 'badge bg-success',
+                'proses_verifikasi' => 'badge bg-warning',
+                default => 'badge bg-secondary',
+              };
 
-                <!-- Tombol Sudah Lunas -->
-                @if($status === 'lunas')
-                  <button class="btn btn-sm btn-secondary" disabled>
-                    <i class="ri-check-circle-line me-1"></i> Lunas
-                  </button>
-                @else
-                  <button class="btn btn-sm btn-success btn-konfirmasi" 
-                    data-id="{{ $item['id'] }}" 
-                    data-nama="{{ $item['nama_lengkap'] }}">
-                    <i class="ri-check-circle-line me-1"></i> Sudah Lunas
-                  </button>
-                @endif
-              </div>
-            </td>
-          </tr>
-          @endforeach
-        </tbody>
-      </table>
+              $alamatParts = [];
+              if($item->pelanggan->alamat_jalan ?? '') $alamatParts[] = $item->pelanggan->alamat_jalan;
+              if(($item->pelanggan->rt ?? '') || ($item->pelanggan->rw ?? '')) {
+                $alamatParts[] = 'RT '.($item->pelanggan->rt ?? '-').' / RW '.($item->pelanggan->rw ?? '-');
+              }
+              if($item->pelanggan->desa ?? '') $alamatParts[] = 'Desa '.$item->pelanggan->desa;
+              if($item->pelanggan->kecamatan ?? '') $alamatParts[] = 'Kecamatan '.$item->pelanggan->kecamatan;
+              if($item->pelanggan->kabupaten ?? '') $alamatParts[] = 'Kabupaten '.$item->pelanggan->kabupaten;
+              if($item->pelanggan->provinsi ?? '') $alamatParts[] = $item->pelanggan->provinsi;
+              $alamatLengkap = implode(', ', $alamatParts);
+            @endphp
+
+            <tr 
+              data-tagihan-id="{{ $item->id }}"
+              data-alamat="{{ $alamatLengkap }}"
+              data-kecamatan="{{ $item->pelanggan->kecamatan ?? '-' }}"
+              data-kabupaten="{{ $item->pelanggan->kabupaten ?? '-' }}"
+              data-provinsi="{{ $item->pelanggan->provinsi ?? '-' }}"
+              data-paket="{{ $item->paket->nama_paket ?? '-' }}"
+              data-harga="Rp {{ number_format($item->paket->harga ?? 0, 0, ',', '.') }}"
+              data-kecepatan="{{ $item->paket->kecepatan ?? '-' }} Mbps"
+              data-tanggal-mulai="{{ $item->tanggal_mulai ? \Carbon\Carbon::parse($item->tanggal_mulai)->format('d M Y') : '-' }}"
+              data-jatuh-tempo="{{ $item->tanggal_berakhir ? \Carbon\Carbon::parse($item->tanggal_berakhir)->format('d M Y') : '-' }}"
+              data-catatan="{{ $item->catatan ?? '-' }}"
+              data-bukti="{{ !empty($item->bukti_pembayaran) ? asset('storage/' . $item->bukti_pembayaran) : '' }}"
+            >
+              <td>
+                <button class="btn btn-sm btn-icon btn-outline-primary btn-detail" title="Lihat Detail">
+                  <i class="ri-eye-line"></i>
+                </button>
+              </td>
+              <td><span class="badge bg-label-dark">{{ $item->pelanggan->nomer_id ?? '-' }}</span></td>
+              <td><strong>{{ $item->pelanggan->nama_lengkap ?? '-' }}</strong></td>
+              <td>
+                <a href="https://wa.me/{{ $item->pelanggan->no_whatsapp ?? '' }}" target="_blank" class="text-decoration-none">
+                  <code style="background: #f8f9fa; padding: 6px 12px; border-radius: 6px; font-size: 0.875rem; font-weight: 600; color: #25D366;">
+                    <i class="ri-whatsapp-line me-1"></i>{{ $item->pelanggan->no_whatsapp ?? '-' }}
+                  </code>
+                </a>
+              </td>
+              <td>
+                <span class="{{ $badgeClass }}">
+                  <i class="ri-time-line me-1"></i>{{ ucfirst(str_replace('_', ' ', $status) ?: 'Belum Bayar') }}
+                </span>
+              </td>
+              <td>
+                <span class="badge bg-label-info">
+                  <i class="ri-box-line me-1"></i>{{ $item->paket->nama_paket ?? '-' }}
+                </span>
+              </td>
+              <td><strong>Rp {{ number_format($item->paket->harga ?? 0, 0, ',', '.') }}</strong></td>
+              <td>
+                <div class="d-flex gap-2 flex-wrap">
+                  @if($status === 'lunas')
+                    <button class="btn btn-sm btn-secondary" disabled>
+                      <i class="ri-check-circle-line me-1"></i> Lunas
+                    </button>
+                  @else
+                    <button class="btn btn-sm btn-success btn-konfirmasi" 
+                      data-id="{{ $item->id }}" 
+                      data-nama="{{ $item->pelanggan->nama_lengkap ?? '-' }}">
+                      <i class="ri-check-circle-line me-1"></i> Konfirmasi Lunas
+                    </button>
+                  @endif
+                </div>
+              </td>
+            </tr>
+            @empty
+            <tr>
+              <td colspan="8" class="text-center py-5">
+                <div class="mb-3">
+                  <i class="ri-inbox-line" style="font-size: 4rem; color: #ddd;"></i>
+                </div>
+                <h5 class="text-muted mb-2">Tidak Ada Tagihan Dalam Proses Verifikasi</h5>
+                <p class="text-muted">Saat ini tidak ada tagihan yang sedang dalam proses verifikasi.</p>
+              </td>
+            </tr>
+            @endforelse
+          </tbody>
+        </table>
+      </div>
+
+      <!-- ========================================= -->
+      <!-- PAGINATION LARAVEL -->
+      <!-- ========================================= -->
+      @if($tagihans->hasPages())
+      <div class="d-flex justify-content-between align-items-center px-4 py-3 border-top bg-light">
+        <div class="text-muted small">
+          Menampilkan <strong>{{ $tagihans->firstItem() }}</strong> - <strong>{{ $tagihans->lastItem() }}</strong> dari <strong>{{ $tagihans->total() }}</strong> tagihan
+        </div>
+        <div>
+          {{ $tagihans->onEachSide(1)->links('pagination::bootstrap-5') }}
+        </div>
+      </div>
+      @endif
     </div>
   </div>
 </div>
@@ -975,254 +1003,23 @@ document.addEventListener("DOMContentLoaded", function () {
     <div class="modal-content">
       <div class="modal-header bg-light">
         <h5 class="modal-title text-white">
-          <i class="ri-information-line me-2"></i>Detail Pelanggan
+          <i class="ri-information-line me-2"></i>Detail Pelanggan & Tagihan
         </h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
-      <div class="modal-body"></div>
+      <div class="modal-body">
+        <!-- Content will be inserted via JavaScript -->
+      </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
           <i class="ri-close-line me-1"></i>Tutup
         </button>
         <button type="button" class="btn btn-success" id="btnKonfirmasiDetail">
-          <i class="ri-check-circle-line me-1"></i> Sudah Lunas
+          <i class="ri-check-circle-line me-1"></i> Konfirmasi Lunas
         </button>
       </div>
     </div>
   </div>
 </div>
-
-<!-- ========================================= -->
-<!-- MODAL: TAMBAH TAGIHAN -->
-<!-- ========================================= -->
-<div class="modal fade" id="modalTambahTagihan" tabindex="-1">
-  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
-    <div class="modal-content">
-      <form action="{{ route('tagihan.store') }}" method="POST">
-        @csrf
-        
-        <div class="modal-header bg-light">
-          <h5 class="modal-title text-white">
-            <i class="ri-add-circle-line me-2"></i>Tambah Tagihan Manual
-          </h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-        </div>
-
-        <div class="modal-body">
-          <div class="row g-3">
-            <div class="col-12">
-              <label class="form-label fw-semibold">Pilih Pelanggan <span class="text-danger">*</span></label>
-              <select id="pelangganSelect" class="form-select" required>
-                <option value="">-- Pilih Pelanggan --</option>
-                @foreach($pelanggan as $p)
-                  <option value="{{ $p->id }}"
-                    data-paket_id="{{ optional($p->paket)->id }}"
-                    data-nama="{{ $p->nama_lengkap }}"
-                    data-alamat_jalan="{{ $p->alamat_jalan }}"
-                    data-rt="{{ $p->rt }}"
-                    data-rw="{{ $p->rw }}"
-                    data-desa="{{ $p->desa }}"
-                    data-kecamatan="{{ $p->kecamatan }}"
-                    data-kabupaten="{{ $p->kabupaten }}"
-                    data-provinsi="{{ $p->provinsi }}"
-                    data-kode_pos="{{ $p->kode_pos }}"
-                    data-nowhatsapp="{{ $p->no_whatsapp }}"
-                    data-nomorid="{{ $p->nomer_id }}"
-                    data-paket="{{ optional($p->paket)->nama_paket }}"
-                    data-harga="{{ optional($p->paket)->harga }}"
-                    data-masa="{{ optional($p->paket)->masa_pembayaran }}"
-                    data-kecepatan="{{ optional($p->paket)->kecepatan }}"
-                    data-durasi="{{ optional($p->paket)->durasi }}">
-                    {{ $p->nomer_id }} - {{ $p->nama_lengkap }}
-                  </option>
-                @endforeach
-              </select>
-            </div>
-
-            <input type="hidden" name="pelanggan_id" id="pelanggan_id">
-            <input type="hidden" name="paket_id" id="paket_id">
-
-            <div class="col-12 mt-4">
-              <h6 class="text-primary fw-bold"><i class="ri-user-3-line me-2"></i>Informasi Pelanggan</h6>
-            </div>
-
-            <div class="col-md-6">
-              <label class="form-label">Nama Lengkap</label>
-              <input type="text" id="nama_lengkap" class="form-control bg-light" readonly>
-            </div>
-
-            <div class="col-md-6">
-              <label class="form-label">Nomor ID</label>
-              <input type="text" id="nomer_id" class="form-control bg-light" readonly>
-            </div>
-
-            <div class="col-md-6">
-              <label class="form-label">Nomor WhatsApp</label>
-              <input type="text" id="no_whatsapp" class="form-control bg-light" readonly>
-            </div>
-
-            <div class="col-md-6">
-              <label class="form-label">Kode Pos</label>
-              <input type="text" id="kode_pos" class="form-control bg-light" readonly>
-            </div>
-
-            <div class="col-12 mt-3">
-              <h6 class="text-primary fw-bold"><i class="ri-map-pin-line me-2"></i>Alamat</h6>
-            </div>
-
-            <div class="col-12">
-              <label class="form-label">Alamat Jalan</label>
-              <input type="text" id="alamat_jalan" class="form-control bg-light" readonly>
-            </div>
-
-            <div class="col-md-3">
-              <label class="form-label">RT</label>
-              <input type="text" id="rt" class="form-control bg-light" readonly>
-            </div>
-
-            <div class="col-md-3">
-              <label class="form-label">RW</label>
-              <input type="text" id="rw" class="form-control bg-light" readonly>
-            </div>
-
-            <div class="col-md-6">
-              <label class="form-label">Desa/Kelurahan</label>
-              <input type="text" id="desa" class="form-control bg-light" readonly>
-            </div>
-
-            <div class="col-md-6">
-              <label class="form-label">Kecamatan</label>
-              <input type="text" id="kecamatan" class="form-control bg-light" readonly>
-            </div>
-
-            <div class="col-md-6">
-              <label class="form-label">Kabupaten/Kota</label>
-              <input type="text" id="kabupaten" class="form-control bg-light" readonly>
-            </div>
-
-            <div class="col-md-6">
-              <label class="form-label">Provinsi</label>
-              <input type="text" id="provinsi" class="form-control bg-light" readonly>
-            </div>
-
-            <div class="col-12 mt-3">
-              <h6 class="text-primary fw-bold"><i class="ri-box-3-line me-2"></i>Paket</h6>
-            </div>
-
-            <div class="col-md-6">
-              <label class="form-label">Nama Paket</label>
-              <input type="text" id="paket" class="form-control bg-light" readonly>
-            </div>
-
-            <div class="col-md-6">
-              <label class="form-label">Harga</label>
-              <input type="text" id="harga" name="harga" class="form-control bg-light" readonly>
-            </div>
-
-            <div class="col-md-6">
-              <label class="form-label">Masa Pembayaran</label>
-              <input type="text" id="masa_pembayaran" class="form-control bg-light" readonly>
-            </div>
-
-            <div class="col-md-6">
-              <label class="form-label">Kecepatan</label>
-              <input type="text" id="kecepatan" class="form-control bg-light" readonly>
-            </div>
-
-            <div class="col-12 mt-3">
-              <h6 class="text-primary fw-bold"><i class="ri-calendar-check-line me-2"></i>Detail Tagihan</h6>
-            </div>
-
-            <div class="col-md-6">
-              <label class="form-label fw-semibold">Tanggal Mulai <span class="text-danger">*</span></label>
-              <input type="date" id="tanggal_mulai" name="tanggal_mulai" class="form-control" required>
-            </div>
-
-            <div class="col-md-6">
-              <label class="form-label fw-semibold">Tanggal Jatuh Tempo <span class="text-danger">*</span></label>
-              <input type="date" id="tanggal_berakhir" name="tanggal_berakhir" class="form-control" required>
-            </div>
-
-            <div class="col-12">
-              <label class="form-label">Catatan</label>
-              <textarea class="form-control" id="catatan" name="catatan" rows="2"></textarea>
-            </div>
-          </div>
-        </div>
-
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-            <i class="ri-close-line me-1"></i>Batal
-          </button>
-          <button type="submit" class="btn btn-primary">
-            <i class="ri-save-line me-1"></i>Simpan
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-</div>
-
-<!-- ========================================= -->
-<!-- MODAL: EDIT (FOREACH) -->
-<!-- ========================================= -->
-@foreach ($tagihans as $tagihan)
-<div class="modal fade" id="modalEditTagihan-{{ $tagihan['id'] }}" tabindex="-1">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content">
-      <form action="{{ route('tagihan.update', $tagihan['id']) }}" method="POST" enctype="multipart/form-data">
-        @csrf
-        @method('PUT')
-
-        <div class="modal-header bg-warning">
-          <h5 class="modal-title text-white fw-bold">
-            <i class="ri-edit-2-line me-2"></i>Edit Tagihan
-          </h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-        </div>
-
-        <div class="modal-body">
-          <div class="row g-3">
-            <div class="col-12">
-              <label class="form-label fw-semibold">Nama Pelanggan</label>
-              <input type="text" class="form-control bg-light" value="{{ $tagihan['nama_lengkap'] ?? '-' }}" readonly>
-            </div>
-            <input type="hidden" name="pelanggan_id" value="{{ $tagihan['pelanggan_id'] ?? '' }}">
-            <input type="hidden" name="paket_id" value="{{ $tagihan['paket']['id'] ?? '' }}">
-
-            <div class="col-md-6">
-              <label class="form-label fw-semibold">Tanggal Mulai</label>
-              <input type="date" name="tanggal_mulai" class="form-control" value="{{ $tagihan['tanggal_mulai'] }}" required>
-            </div>
-
-            <div class="col-md-6">
-              <label class="form-label fw-semibold">Tanggal Jatuh Tempo</label>
-              <input type="date" name="tanggal_berakhir" class="form-control" value="{{ $tagihan['tanggal_berakhir'] }}" required>
-            </div>
-
-            <div class="col-12">
-              <label class="form-label">Catatan</label>
-              <textarea class="form-control" name="catatan" rows="2">{{ $tagihan['catatan'] ?? '' }}</textarea>
-            </div>
-
-            <div class="col-12">
-              <label class="form-label">Bukti Pembayaran</label>
-              <input type="file" name="bukti_pembayaran" class="form-control" accept="image/*,.pdf">
-              <small class="text-muted">Format: JPG, PNG, PDF (Max: 2MB)</small>
-            </div>
-          </div>
-        </div>
-
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-          <button type="submit" class="btn btn-warning">
-            <i class="ri-save-line me-1"></i>Simpan
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-</div>
-@endforeach
 
 @endsection

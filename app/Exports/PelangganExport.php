@@ -11,31 +11,42 @@ class PelangganExport implements FromCollection, WithHeadings, WithMapping
 {
     public function collection()
     {
-        return Pelanggan::select(
-            'nama_lengkap',
-            'nomer_id',
-            'no_whatsapp',
-            'created_at'
-        )->get();
+        return Pelanggan::query()
+            ->with(['loginStatus:id,pelanggan_id,is_active'])
+            ->select(
+                'id',
+                'nama_lengkap',
+                'nomer_id',
+                'no_whatsapp',
+                'created_at'
+            )
+            ->get();
     }
 
     public function headings(): array
     {
         return [
             'Nama',
-            'nomer_id',
-	    'telp',
-            'Tanggal Daftar'
+            'Nomer ID',
+            'Telp',
+            'Status',
+            'Tanggal Daftar',
         ];
     }
 
     public function map($row): array
     {
         return [
-            $row->nama_lengkap,
-            $row->nomer_id,
-	    $row->no_whatsapp,
-            $row->created_at->format('d-m-Y'),
+            $row->nama_lengkap ?? '-',
+            $row->nomer_id ?? '-',
+            $row->no_whatsapp ?? '-',
+
+            // Status login dari tabel statuses
+            ($row->loginStatus && $row->loginStatus->is_active === true)
+                ? 'Aktif'
+                : 'Tidak Aktif',
+
+            optional($row->created_at)->format('d-m-Y') ?? '-',
         ];
     }
 }

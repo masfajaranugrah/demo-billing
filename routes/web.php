@@ -25,7 +25,8 @@ use App\Http\Controllers\KwitansiController ;
 use App\Http\Controllers\PushNotificationController;
 use App\Http\Controllers\DatabaseBackupController;
 use App\Http\Controllers\IklanController;
-
+use App\Http\Controllers\OutstandingController;
+ 
 use App\Http\Controllers\CustomerTagihanController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\ExpenseController;
@@ -86,7 +87,6 @@ Route::post('/customer/logout', [AuthController::class, 'logoutCustomer'])->name
 
 Route::prefix('/pelanggan/jernihnet')->group(function () {
 
-    // HANYA boleh diakses kalau BELUM login sebagai customer
     Route::middleware('guest:customer')->group(function () {
         Route::get('/login', [AuthController::class, 'loginMember'])
             ->name('users.member');
@@ -149,6 +149,7 @@ Route::middleware(['auth', 'role:administrator,admin'])->group(function () {
         Route::post('/{id}/bayar', [TagihanController::class, 'updateStatus'])->name('tagihan.bayar');
         Route::delete('/tagihan/{id}', [TagihanController::class, 'destroy'])->name('tagihan.destroy');
         Route::post('/{id}/bayar', [TagihanController::class, 'konfirmasiBayar'])->name('tagihan.konfirmasi');
+        Route::get('/ostanding', [OutstandingController::class, 'index'])->name('tagihan.outstanding');
         Route::get('/pdf', [TagihanController::class, 'lihat']);
     });
 
@@ -315,7 +316,7 @@ Route::middleware(['auth:customer','customer_status'])->group(function () {
     Route::get('dashboard/customer/chat', [ChatController::class, 'user'])->name('customer.chat');
 });
 
-Route::prefix('/pelanggan/jernihnet')->group(function () {
+Route::prefix('/pelanggan/jernihnet')->middleware('customer.guest')->group(function () {
     Route::get('/login', [AuthController::class, 'loginMember'])->name('users.member');
     Route::post('/login', [AuthController::class, 'loginMem'])->name('login.member.post');
 });
@@ -611,3 +612,6 @@ Route::prefix('mobile/customer')->middleware(['webview.token'])
 });
 
 Route::get('/pelanggan/export', [PelangganController::class, 'exportExcel']);
+
+Route::get('/dashboard/admin/pelanggan/search', [TagihanController::class, 'searchPelanggan'])
+    ->name('pelanggan.search');

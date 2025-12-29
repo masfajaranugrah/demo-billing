@@ -134,6 +134,82 @@
     font-weight: 600;
     color: #5a5f7d;
   }
+
+  /* Select2 Custom Styling */
+  .select2-container--default .select2-selection--single {
+    border-radius: 8px;
+    border: 1.5px solid #e8e8e8;
+    height: auto;
+    padding: 0.75rem 1rem;
+    transition: all 0.3s;
+  }
+
+  .select2-container--default .select2-selection--single:focus,
+  .select2-container--default.select2-container--open .select2-selection--single {
+    border-color: #696cff;
+    box-shadow: 0 0 0 0.2rem rgba(105, 108, 255, 0.15);
+  }
+
+  .select2-container--default .select2-selection--single .select2-selection__rendered {
+    color: #5a5f7d;
+    line-height: 1.5;
+    padding: 0;
+    font-size: 0.9375rem;
+  }
+
+  .select2-container--default .select2-selection--single .select2-selection__placeholder {
+    color: #a8afc7;
+    font-size: 0.875rem;
+  }
+
+  .select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 100%;
+    right: 10px;
+  }
+
+  .select2-dropdown {
+    border: 1.5px solid #e8e8e8;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+
+  .select2-container--default .select2-search--dropdown .select2-search__field {
+    border: 1.5px solid #e8e8e8;
+    border-radius: 6px;
+    padding: 0.625rem;
+    font-size: 0.875rem;
+  }
+
+  .select2-container--default .select2-search--dropdown .select2-search__field:focus {
+    border-color: #696cff;
+    outline: none;
+    box-shadow: 0 0 0 0.15rem rgba(105, 108, 255, 0.15);
+  }
+
+  .select2-container--default .select2-results__option--highlighted[aria-selected] {
+    background-color: #696cff;
+  }
+
+  .select2-container--default .select2-results__option[aria-selected=true] {
+    background-color: #f0f0ff;
+    color: #696cff;
+  }
+
+  .select2-results__option {
+    padding: 0.625rem 1rem;
+    font-size: 0.9375rem;
+  }
+
+  /* Select2 Clear Button */
+  .select2-container--default .select2-selection--single .select2-selection__clear {
+    color: #a8afc7;
+    font-size: 1.2rem;
+    margin-right: 10px;
+  }
+
+  .select2-container--default .select2-selection--single .select2-selection__clear:hover {
+    color: #696cff;
+  }
 </style>
 @endsection
 
@@ -148,6 +224,24 @@
 @section('page-script')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    // Inisialisasi Select2 untuk dropdown paket
+    $('#paket_id').select2({
+        placeholder: '-- Pilih Paket Internet --',
+        allowClear: true,
+        width: '100%',
+        language: {
+            noResults: function() {
+                return "Paket tidak ditemukan";
+            },
+            searching: function() {
+                return "Mencari...";
+            },
+            inputTooShort: function() {
+                return "Ketik untuk mencari paket";
+            }
+        }
+    });
+
     const paketSelect = document.getElementById('paket_id');
     const hargaDisplay = document.getElementById('harga_display');
     const masaDisplay = document.getElementById('masa_display');
@@ -172,8 +266,11 @@ document.addEventListener('DOMContentLoaded', function () {
         tanggalBerakhir.value = formatDate(start);
     }
 
-    paketSelect.addEventListener('change', () => {
-        const selected = paketData.find(p => p.id == paketSelect.value);
+    // Event untuk Select2 menggunakan jQuery
+    $('#paket_id').on('change', function() {
+        const selectedValue = $(this).val();
+        const selected = paketData.find(p => p.id == selectedValue);
+        
         if (selected) {
             hargaDisplay.textContent = new Intl.NumberFormat('id-ID', {
                 style: 'currency',
@@ -190,7 +287,8 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     tanggalMulai.addEventListener('change', () => {
-        const selected = paketData.find(p => p.id == paketSelect.value);
+        const selectedValue = $('#paket_id').val();
+        const selected = paketData.find(p => p.id == selectedValue);
         if (selected) updateTanggalBerakhir(selected.masa_pembayaran);
     });
 
@@ -522,7 +620,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         @enderror
                     </div>
 
-                    <!-- Pilih Paket -->
+                    <!-- Pilih Paket dengan Select2 -->
                     <div class="mb-4">
                         <label for="paket_id" class="form-label">
                             <i class="ri-price-tag-3-line"></i>Pilih Paket Internet

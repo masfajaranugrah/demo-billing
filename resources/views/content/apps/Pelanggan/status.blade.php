@@ -20,12 +20,12 @@
   .card {
     border: none;
     border-radius: var(--border-radius);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     transition: var(--transition);
   }
 
   .card:hover {
-    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
   }
 
   .card-header-custom {
@@ -38,14 +38,14 @@
   .stats-card {
     border-radius: var(--border-radius);
     padding: 1.5rem;
-    background: white;
+    background: #fff;
     border: 1px solid #f0f0f0;
     transition: var(--transition);
   }
 
   .stats-card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
   }
 
   .stats-icon {
@@ -83,7 +83,7 @@
   .table-modern tbody tr:not(.empty-state-row):hover {
     background-color: #f8f9ff !important;
     transform: scale(1.001);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   }
 
   .table-modern tbody td {
@@ -118,15 +118,17 @@
     color: #82868b !important;
   }
 
-  /* Filter Form Styling */
-  .form-control, .form-select {
+  /* Form & button */
+  .form-control,
+  .form-select {
     border-radius: 8px;
     border: 1px solid #e0e0e0;
     padding: 0.625rem 1rem;
     transition: var(--transition);
   }
 
-  .form-control:focus, .form-select:focus {
+  .form-control:focus,
+  .form-select:focus {
     border-color: var(--primary-color);
     box-shadow: 0 0 0 3px rgba(105, 108, 255, 0.1);
   }
@@ -161,7 +163,7 @@
     border-color: #ccc;
   }
 
-  /* Empty State Styling */
+  /* Empty state */
   .empty-state-row td {
     background: #fafbfc !important;
     border: none !important;
@@ -171,18 +173,12 @@
     padding: 3rem 1rem;
   }
 
-  .empty-state-row:hover {
-    background: #fafbfc !important;
-    transform: none !important;
-    box-shadow: none !important;
-  }
-
   table.dataTable tbody tr.empty-state-row,
   table.dataTable tbody tr.empty-state-row:hover {
     background: #fafbfc !important;
   }
 
-  /* Laravel Pagination Styling */
+  /* Pagination (Laravel) */
   .pagination-wrapper {
     display: flex;
     justify-content: space-between;
@@ -209,9 +205,9 @@
     border: 1px solid #e0e0e0;
     color: #6c757d;
     font-weight: 600;
-    transition: all 0.3s ease;
     background-color: #fff;
     margin: 0 2px;
+    transition: all 0.3s ease;
   }
 
   .pagination .page-item .page-link:hover {
@@ -242,14 +238,11 @@
     font-weight: 500;
   }
 
-  /* Loading Overlay */
+  /* Loading overlay */
   .loading-overlay {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.5);
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
     display: none;
     align-items: center;
     justify-content: center;
@@ -262,7 +255,7 @@
     border-width: 0.3rem;
   }
 
-  /* Custom Scrollbar */
+  /* Scrollbar */
   .table-responsive::-webkit-scrollbar {
     height: 8px;
   }
@@ -281,14 +274,13 @@
     background: #5a5de8;
   }
 
-  /* Hide DataTables controls */
+  /* Hide DataTables default controls */
   .dataTables_info,
   .dataTables_paginate,
   .dataTables_length {
     display: none !important;
   }
 
-  /* Responsive */
   @media (max-width: 768px) {
     .pagination-wrapper {
       flex-direction: column;
@@ -316,8 +308,7 @@
 
 @section('page-script')
 <script>
-document.addEventListener("DOMContentLoaded", function() {
-    // ? Load jQuery and DataTables
+  document.addEventListener("DOMContentLoaded", function () {
     const loadScript = (src) => new Promise((resolve, reject) => {
       const s = document.createElement('script');
       s.src = src;
@@ -337,6 +328,7 @@ document.addEventListener("DOMContentLoaded", function() {
       css.rel = 'stylesheet';
       css.href = 'https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css';
       document.head.appendChild(css);
+
       const jsCore = loadScript('https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js');
       const jsBs = loadScript('https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js');
       return Promise.all([jsCore, jsBs]);
@@ -348,13 +340,11 @@ document.addEventListener("DOMContentLoaded", function() {
         const $table = $('.datatables-status');
         if (!$table.length) return;
 
-        // ? CEK APAKAH ADA DATA (row dengan data, bukan empty state)
         const hasData = $table.find('tbody tr').not(':has(td[colspan])').length > 0;
 
         if (hasData) {
-          // ? Initialize DataTables HANYA jika ada data
           try {
-            const dt = $table.DataTable({
+            $table.DataTable({
               paging: false,
               lengthChange: false,
               searching: false,
@@ -379,49 +369,43 @@ document.addEventListener("DOMContentLoaded", function() {
                 { width: '11%', targets: 7 }
               ]
             });
-            
-            console.log('? DataTables initialized successfully');
           } catch (error) {
-            console.warn('?? DataTables initialization error:', error);
+            console.warn('DataTables initialization error:', error);
           }
-        } else {
-          console.log('?? Table kosong - DataTables tidak di-initialize');
         }
-
-      }).catch((error) => {
-        console.warn('? DataTables gagal dimuat:', error);
+      })
+      .catch((error) => {
+        console.warn('DataTables gagal dimuat:', error);
       });
 
-    // ? Auto-submit filter saat status berubah
     const statusFilter = document.getElementById('statusFilter');
     if (statusFilter) {
-      statusFilter.addEventListener('change', function() {
+      statusFilter.addEventListener('change', function () {
         this.form.submit();
       });
     }
 
-    // ? Loading indicator untuk form submit
     const filterForm = document.getElementById('filterForm');
     if (filterForm) {
-      filterForm.addEventListener('submit', function() {
-        document.querySelector('.loading-overlay').style.display = 'flex';
+      filterForm.addEventListener('submit', function () {
+        const overlay = document.querySelector('.loading-overlay');
+        if (overlay) overlay.style.display = 'flex';
       });
     }
-});
+  });
 </script>
 @endsection
 
 @section('content')
-<!-- Loading Overlay -->
 <div class="loading-overlay">
-    <div class="spinner-border spinner-border-custom text-light" role="status">
-        <span class="visually-hidden">Loading...</span>
-    </div>
+  <div class="spinner-border spinner-border-custom text-light" role="status">
+    <span class="visually-hidden">Loading...</span>
+  </div>
 </div>
 
 <div class="container-fluid px-4 py-4">
-  
-  {{-- ? Statistics Cards --}}
+
+  {{-- Statistik --}}
   <div class="row g-4 mb-4">
     <div class="col-xl-4 col-md-6">
       <div class="stats-card">
@@ -465,57 +449,50 @@ document.addEventListener("DOMContentLoaded", function() {
       </div>
     </div>
   </div>
-<a href="{{ url('/pelanggan/export') }}" class="btn btn-success">
-    Export Excel
-</a>
-  {{-- ? Filter & Search Section --}}
+
+ 
+
+  {{-- Filter & Search --}}
   <div class="card mb-4">
     <div class="card-body">
       <form method="GET" action="{{ route('pelanggan.status.active') }}" id="filterForm">
         <div class="row g-3 align-items-end">
-          {{-- Search Input --}}
           <div class="col-md-5">
             <label class="form-label small fw-semibold mb-2">
               <i class="ri-search-line me-1"></i>Pencarian
             </label>
-            <input 
-              type="text" 
-              name="search" 
-              class="form-control" 
+            <input
+              type="text"
+              name="search"
+              class="form-control"
               placeholder="Cari nama, No. ID, WhatsApp, alamat, paket..."
               value="{{ request('search') }}">
           </div>
 
-          {{-- Status Filter --}}
           <div class="col-md-3">
             <label class="form-label small fw-semibold mb-2">
               <i class="ri-filter-3-line me-1"></i>Filter Status
             </label>
-            <select 
-              name="status_filter" 
-              id="statusFilter" 
+            <select
+              name="status_filter"
+              id="statusFilter"
               class="form-select">
               <option value="">Semua Status</option>
-              <option value="Active" {{ request('status_filter') == 'Active' ? 'selected' : '' }}>
-                Active
-              </option>
-              <option value="Inactive" {{ request('status_filter') == 'Inactive' ? 'selected' : '' }}>
-                Inactive
-              </option>
+              <option value="Active" {{ request('status_filter') == 'Active' ? 'selected' : '' }}>Active</option>
+              <option value="Inactive" {{ request('status_filter') == 'Inactive' ? 'selected' : '' }}>Inactive</option>
             </select>
           </div>
 
-          {{-- Buttons --}}
           <div class="col-md-4">
             <div class="d-flex gap-2">
               <button type="submit" class="btn btn-primary flex-grow-1">
                 <i class="ri-search-line me-1"></i>Cari
               </button>
-              
+
               @if(request('status_filter') || request('search'))
-              <a href="{{ route('pelanggan.status.active') }}" class="btn btn-secondary">
-                <i class="ri-refresh-line me-1"></i>Reset
-              </a>
+                <a href="{{ route('pelanggan.status.active') }}" class="btn btn-secondary">
+                  <i class="ri-refresh-line me-1"></i>Reset
+                </a>
               @endif
             </div>
           </div>
@@ -524,27 +501,33 @@ document.addEventListener("DOMContentLoaded", function() {
     </div>
   </div>
 
-  {{-- ? Data Table --}}
-  <div class="card border-0 shadow-sm">
-    <div class="card-header-custom">
-      <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
-        <div>
-          <h4 class="mb-1 fw-bold">
-            <i class="ri-user-follow-line me-2"></i>Status Pelanggan
-          </h4>
-          <p class="mb-0 opacity-75 small">Monitor status login dan aktivitas pelanggan</p>
-        </div>
+  {{-- Data Table --}}
+<div class="card border-0 shadow-sm">
+  <div class="card-header-custom">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+      <div>
+        <h4 class="mb-1 fw-bold">
+          <i class="ri-user-follow-line me-2"></i>Status Pelanggan
+        </h4>
+        <p class="mb-0 opacity-75 small">Monitor status login dan aktivitas pelanggan secara real-time.</p>
+      </div>
+
+      <div class="d-flex align-items-center gap-2">
+        {{-- Badge total data --}}
         @if($pelanggan->total() > 0)
-        <div class="text-end">
           <span class="badge bg-label-primary" style="padding: 10px 20px; font-size: 0.9rem;">
             <i class="ri-database-2-line me-1"></i>
             {{ $pelanggan->total() }} Data Total
           </span>
-        </div>
         @endif
+
+        {{-- Export Excel di kanan header --}}
+        <a href="{{ url('/pelanggan/export') }}" class="btn btn-success">
+          <i class="ri-file-excel-2-line me-1"></i> Export Excel
+        </a>
       </div>
     </div>
-    
+  </div>
     <div class="card-body p-0">
       <div class="table-responsive p-3">
         <table class="datatables-status table table-modern table-hover nowrap" style="width: 100%;">
@@ -563,13 +546,13 @@ document.addEventListener("DOMContentLoaded", function() {
           <tbody>
             @forelse($pelanggan as $index => $item)
               @php
-                $isActive = optional($item->loginStatus)->is_active;
-                $loggedInAt = optional($item->loginStatus)->logged_in_at;
-                $no = ($pelanggan->currentPage() - 1) * $pelanggan->perPage() + $index + 1;
+                $isActive    = optional($item->loginStatus)->is_active;
+                $loggedInAt  = optional($item->loginStatus)->logged_in_at;
+                $no          = ($pelanggan->currentPage() - 1) * $pelanggan->perPage() + $index + 1;
               @endphp
               <tr>
                 <td class="fw-bold text-center">{{ $no }}</td>
-                
+
                 <td>
                   <div class="d-flex align-items-center">
                     <div class="status-icon bg-label-primary me-2">
@@ -578,17 +561,18 @@ document.addEventListener("DOMContentLoaded", function() {
                     <span class="fw-semibold">{{ $item->nama_lengkap }}</span>
                   </div>
                 </td>
-                
+
                 <td>
-                  <a href="https://wa.me/{{ $item->no_whatsapp }}" 
-                     target="_blank" 
-                     class="text-decoration-none">
+                  <a
+                    href="https://wa.me/{{ $item->no_whatsapp }}"
+                    target="_blank"
+                    class="text-decoration-none">
                     <code style="background: #f8f9fa; padding: 6px 12px; border-radius: 6px; font-size: 0.875rem; font-weight: 600; color: #25D366;">
                       <i class="ri-whatsapp-line me-1"></i>{{ $item->no_whatsapp }}
                     </code>
                   </a>
                 </td>
-                
+
                 <td>
                   <div style="min-width: 200px; max-width: 250px;">
                     <div class="text-truncate">{{ $item->alamat_jalan ?? '-' }}</div>
@@ -603,13 +587,13 @@ document.addEventListener("DOMContentLoaded", function() {
                     {{ $item->nomer_id ?? '-' }}
                   </span>
                 </td>
-                
+
                 <td>
                   <span class="badge bg-label-info">
                     <i class="ri-box-line me-1"></i>{{ optional($item->paket)->nama_paket ?? '-' }}
                   </span>
                 </td>
-                
+
                 <td>
                   @if($isActive)
                     <span class="badge bg-success">
@@ -621,7 +605,7 @@ document.addEventListener("DOMContentLoaded", function() {
                     </span>
                   @endif
                 </td>
-                
+
                 <td>
                   @if($loggedInAt)
                     <div>
@@ -638,44 +622,41 @@ document.addEventListener("DOMContentLoaded", function() {
                 </td>
               </tr>
             @empty
-              {{-- ? EMPTY STATE dengan styling yang bagus --}}
               <tr class="empty-state-row">
                 <td colspan="8" class="text-center">
                   <div class="empty-state-content">
                     <div class="mb-3">
                       <i class="ri-inbox-line" style="font-size: 4rem; color: #ddd;"></i>
                     </div>
-                    
+
                     @if(request('search') || request('status_filter'))
-                      {{-- Jika ada filter tapi tidak ada hasil --}}
                       <h5 class="text-muted mb-2">
                         <i class="ri-search-eye-line me-2"></i>Data Tidak Ditemukan
                       </h5>
                       <p class="text-muted mb-3">
                         Tidak ada data yang sesuai dengan pencarian atau filter yang Anda pilih.
                       </p>
-                      
+
                       <div class="mb-3">
                         @if(request('search'))
-                        <span class="badge bg-label-primary me-2" style="padding: 8px 16px;">
-                          <i class="ri-search-line me-1"></i>
-                          Pencarian: "{{ request('search') }}"
-                        </span>
+                          <span class="badge bg-label-primary me-2" style="padding: 8px 16px;">
+                            <i class="ri-search-line me-1"></i>
+                            Pencarian: "{{ request('search') }}"
+                          </span>
                         @endif
-                        
+
                         @if(request('status_filter'))
-                        <span class="badge bg-label-info" style="padding: 8px 16px;">
-                          <i class="ri-filter-line me-1"></i>
-                          Status: {{ request('status_filter') }}
-                        </span>
+                          <span class="badge bg-label-info" style="padding: 8px 16px;">
+                            <i class="ri-filter-line me-1"></i>
+                            Status: {{ request('status_filter') }}
+                          </span>
                         @endif
                       </div>
-                      
+
                       <a href="{{ route('pelanggan.status.active') }}" class="btn btn-primary mt-2">
-                        <i class="ri-refresh-line me-1"></i>Reset Filter & Tampilkan Semua Data
+                        <i class="ri-refresh-line me-1"></i>Reset Filter &amp; Tampilkan Semua Data
                       </a>
                     @else
-                      {{-- Jika memang tidak ada data sama sekali --}}
                       <h5 class="text-muted mb-2">
                         <i class="ri-user-unfollow-line me-2"></i>Belum Ada Data Pelanggan
                       </h5>
@@ -692,17 +673,16 @@ document.addEventListener("DOMContentLoaded", function() {
       </div>
     </div>
 
-    {{-- ? Laravel Pagination --}}
     @if($pelanggan->hasPages())
-    <div class="pagination-wrapper">
-      <div class="pagination-info">
-        Menampilkan <strong>{{ $pelanggan->firstItem() ?? 0 }}</strong> - <strong>{{ $pelanggan->lastItem() ?? 0 }}</strong> 
-        dari <strong>{{ $pelanggan->total() }}</strong> data
+      <div class="pagination-wrapper">
+        <div class="pagination-info">
+          Menampilkan <strong>{{ $pelanggan->firstItem() ?? 0 }}</strong> - <strong>{{ $pelanggan->lastItem() ?? 0 }}</strong>
+          dari <strong>{{ $pelanggan->total() }}</strong> data
+        </div>
+        <div>
+          {{ $pelanggan->onEachSide(1)->links('pagination::bootstrap-5') }}
+        </div>
       </div>
-      <div>
-        {{ $pelanggan->onEachSide(1)->links('pagination::bootstrap-5') }}
-      </div>
-    </div>
     @endif
   </div>
 

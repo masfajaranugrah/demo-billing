@@ -27,22 +27,29 @@ class DatabaseBackupController extends Controller
     }
 
     // Buat backup baru
-    public function backup()
-    {
-        try {
-            $exitCode = Artisan::call('backup:run', ['--only-db' => true]);
+  public function backup()
+{
+    $dbHost = env('DB_HOST');
+    $dbPort = env('DB_PORT', '3306');
+    $dbName = env('DB_DATABASE');
+    $dbUser = env('DB_USERNAME');
+    $dbPass = env('DB_PASSWORD');
 
-            $output = Artisan::output();
+    $fileName = 'backup-' . date('Y-m-d-H-i-s') . '.sql';
+    $filePath = $this->backupPath . '/' . $fileName;
 
-            if ($exitCode !== 0) {
-                return back()->with('error', "Backup gagal: {$output}");
-            }
+    $command = "mysqldump -h {$dbHost} -P {$dbPort} -u {$dbUser} -p'{$dbPass}' {$dbName} > {$filePath}";
 
-            return back()->with('success', "Backup berhasil dibuat! Output: {$output}");
-        } catch (\Exception $e) {
-            return back()->with('error', 'Backup gagal: ' . $e->getMessage());
+    try {
+        system($command, $returnVar);
+        if ($returnVar !== 0) {
+            return back()->with('error', 'Backup gagal dibuat.');
         }
+        return back()->with('success', 'Backup berhasil dibuat: ' . $fileName);
+    } catch (\Exception $e) {
+        return back()->with('error', 'Backup gagal: ' . $e->getMessage());
     }
+}
 
     // Hapus backup
     public function delete($filename)

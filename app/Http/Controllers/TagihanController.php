@@ -8,8 +8,12 @@ use App\Models\Pelanggan;
 use App\Models\Tagihan;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\BayarExport;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
+
 
 class TagihanController extends Controller
 {
@@ -293,7 +297,8 @@ public function index(Request $request)
     // ? FILTER KABUPATEN & KECAMATAN DIHAPUS
 
     // ? PAGINATION
-    $tagihans = $query->orderBy('created_at', 'desc')
+    $tagihans = $query->where('status_pembayaran', 'belum bayar')
+        ->orderBy('created_at', 'desc')
         ->paginate(40)
         ->withQueryString()
         ->through(function ($item) {
@@ -355,122 +360,169 @@ public function index(Request $request)
 }
 
 
+ 
+    public function proses(Request $request)
+    {
+        // Ambil semua pelanggan & paket untuk dropdown modal
+        $pelanggan = Pelanggan::all();
+        $paket = Paket::all();
 
-public function proses()
-{
-    // Ambil semua pelanggan & paket untuk dropdown modal
-    $pelanggan = Pelanggan::all();
-    $paket = Paket::all();
+        // Query builder dengan search
+        $query = Tagihan::with(['pelanggan', 'paket'])
+            ->where('status_pembayaran', 'proses_verifikasi');
 
-    // Query dengan pagination - 20 data per page (TANPA through/map)
-    $tagihans = Tagihan::with(['pelanggan', 'paket'])
-        ->where('status_pembayaran', 'proses_verifikasi')
-        ->orderBy('created_at', 'desc')
-        ->paginate(20); // HANYA INI SAJA, JANGAN PAKAI through() atau map()
+        // Tambahkan filter search jika ada parameter
+        if ($search = $request->input('search')) {
+            $query->where(function($q) use ($search) {
+                $q->whereHas('pelanggan', function($subQ) use ($search) {
+                    $subQ->where('nama_lengkap', 'LIKE', "%{$search}%")
+                         ->orWhere('nomer_id', 'LIKE', "%{$search}%")
+                         ->orWhere('no_whatsapp', 'LIKE', "%{$search}%")
+                         ->orWhere('alamat_jalan', 'LIKE', "%{$search}%")
+                         ->orWhere('desa', 'LIKE', "%{$search}%")
+                         ->orWhere('kecamatan', 'LIKE', "%{$search}%")
+                         ->orWhere('kabupaten', 'LIKE', "%{$search}%");
+                })
+                ->orWhereHas('paket', function($subQ) use ($search) {
+                    $subQ->where('nama_paket', 'LIKE', "%{$search}%");
+                });
+            });
+        }
 
-    // Ambil list unik untuk filter dropdown
-    $kabupatenList = $pelanggan->pluck('kabupaten')->unique();
-    $kecamatanList = $pelanggan->pluck('kecamatan')->unique();
+        // Pagination dengan withQueryString untuk mempertahankan parameter search
+        $tagihans = $query->orderBy('created_at', 'desc')
+            ->paginate(20)
+            ->withQueryString();
 
-    // Statistik
-    $totalCustomer = $pelanggan->count();
-    $lunas = 0;
-    $belumLunas = Tagihan::where('status_pembayaran', 'proses_verifikasi')->count();
-    $totalPaket = $paket->count();
+        // Ambil list unik untuk filter dropdown
+        $kabupatenList = $pelanggan->pluck('kabupaten')->unique();
+        $kecamatanList = $pelanggan->pluck('kecamatan')->unique();
 
-    return view('content.apps.Tagihan.proses-tagihan', compact(
-        'tagihans',
-        'pelanggan',
-        'paket',
-        'totalCustomer',
-        'lunas',
-        'belumLunas',
-        'totalPaket',
-        'kabupatenList',
-        'kecamatanList'
-    ));
-}
+        // Statistik
+        $totalCustomer = $pelanggan->count();
+        $lunas = 0;
+        $belumLunas = Tagihan::where('status_pembayaran', 'proses_verifikasi')->count();
+        $totalPaket = $paket->count();
 
-
-
-
-
-
-public function lunas()
-{
-    // Ambil semua pelanggan & paket untuk dropdown modal
-    $pelanggan = Pelanggan::all();
-    $paket = Paket::all();
-
-    // Ambil semua tagihan dengan status "lunas" beserta relasinya
-    $tagihans = Tagihan::with(['pelanggan', 'paket'])
-        ->where('status_pembayaran', 'lunas')
-        ->orderBy('created_at', 'desc')
-        ->get()
-        ->map(function ($item) {
-            $pelanggan = $item->pelanggan;
-            $paket = $item->paket;
+        return view('content.apps.Tagihan.proses-tagihan', compact(
+            'tagihans',
+            'pelanggan',
+            'paket',
+            'totalCustomer',
+            'lunas',
+            'belumLunas',
+            'totalPaket',
+            'kabupatenList',
+            'kecamatanList'
+        ));
+    }
+ 
 
 
-$kwitansiUrl = null;
-if (!empty($item->kwitansi)) {
-    $kwitansiUrl = $item->kwitansi;
-}
-            return [
-                'id' => $item->id,
-                'nomer_id' => $pelanggan->nomer_id ?? '-',
-                'nama_lengkap' => $pelanggan->nama_lengkap ?? '-',
-                'alamat_jalan' => $pelanggan->alamat_jalan ?? '-',
-                'rt' => $pelanggan->rt ?? '-',
-                'rw' => $pelanggan->rw ?? '-',
-                'desa' => $pelanggan->desa ?? '-',
-                'kecamatan' => $pelanggan->kecamatan ?? '-',
-                'kabupaten' => $pelanggan->kabupaten ?? '-',
-                'provinsi' => $pelanggan->provinsi ?? '-',
-                'kode_pos' => $pelanggan->kode_pos ?? '-',
-                'paket' => [
-                    'id' => $paket->id ?? null,
-                    'nama_paket' => $paket->nama_paket ?? '-',
-                    'harga' => $paket->harga ?? 0,
-                    'kecepatan' => $paket->kecepatan ?? 0,
-                    'masa_pembayaran' => $paket->masa_pembayaran ?? 0,
-                    'durasi' => $paket->durasi ?? 0,
-                ],
-                'tanggal_mulai' => $item->tanggal_mulai ?? null,
-                'tanggal_berakhir' => $item->tanggal_berakhir ?? null,
-                'status_pembayaran' => $item->status_pembayaran ?? 'belum bayar',
- 		 'type_pembayaran' => $item->rekening->nama_bank ?? '-',
+public function lunas(Request $request)
+    {
+        // Ambil semua pelanggan & paket untuk dropdown modal
+        $pelanggan = Pelanggan::all();
+        $paket = Paket::all();
 
-                'tanggal_pembayaran' => $item->tanggal_pembayaran ?? '-',
-                'bukti_pembayaran' => $item->bukti_pembayaran ?? '-',
-                'kwitansi' => $kwitansiUrl,
-                'no_whatsapp' => $pelanggan->no_whatsapp ?? '08xxxxxxxxxx',
-                'catatan' => $item->catatan ?? '-',
-            ];
-        });
+        // Query builder dengan search - HANYA YANG LUNAS
+        $query = Tagihan::with(['pelanggan', 'paket', 'rekening'])
+            ->where('status_pembayaran', 'lunas');
 
-    // Ambil list unik untuk filter dropdown
-    $kabupatenList = $pelanggan->pluck('kabupaten')->unique();
-    $kecamatanList = $pelanggan->pluck('kecamatan')->unique();
+        // Tambahkan filter search jika ada parameter
+        if ($search = $request->input('search')) {
+            $query->where(function($q) use ($search) {
+                $q->whereHas('pelanggan', function($subQ) use ($search) {
+                    $subQ->where('nama_lengkap', 'LIKE', "%{$search}%")
+                         ->orWhere('nomer_id', 'LIKE', "%{$search}%")
+                         ->orWhere('no_whatsapp', 'LIKE', "%{$search}%")
+                         ->orWhere('alamat_jalan', 'LIKE', "%{$search}%")
+                         ->orWhere('desa', 'LIKE', "%{$search}%")
+                         ->orWhere('kecamatan', 'LIKE', "%{$search}%")
+                         ->orWhere('kabupaten', 'LIKE', "%{$search}%");
+                })
+                ->orWhereHas('paket', function($subQ) use ($search) {
+                    $subQ->where('nama_paket', 'LIKE', "%{$search}%");
+                })
+                ->orWhereHas('rekening', function($subQ) use ($search) {
+                    $subQ->where('nama_bank', 'LIKE', "%{$search}%");
+                });
+            });
+        }
 
-    // Statistik
-    $totalCustomer = $pelanggan->count();
-    $lunas = $tagihans->count(); // Jumlah tagihan yang sudah lunas
-    $belumLunas = Tagihan::where('status_pembayaran', '!=', 'lunas')->count(); // Hitung tagihan belum lunas
-    $totalPaket = $paket->count();
+        // PAGINATION 20 DATA PER PAGE dengan through()
+        $tagihans = $query->orderBy('created_at', 'desc')
+            ->paginate(10)
+            ->withQueryString()
+            ->through(function ($item) {
+                $pelanggan = $item->pelanggan;
+                $paket = $item->paket;
 
-    return view('content.apps.Tagihan.tagihan-lunas', compact(
-        'tagihans',
-        'pelanggan',
-        'paket',
-        'totalCustomer',
-        'lunas',
-        'belumLunas',
-        'totalPaket',
-        'kabupatenList',
-        'kecamatanList'
-    ));
-}
+                $kwitansiUrl = null;
+                if (!empty($item->kwitansi)) {
+                    $kwitansiUrl = $item->kwitansi;
+                }
+
+                return [
+                    'id' => $item->id,
+                    'nomer_id' => $pelanggan->nomer_id ?? '-',
+                    'nama_lengkap' => $pelanggan->nama_lengkap ?? '-',
+                    'alamat_jalan' => $pelanggan->alamat_jalan ?? '-',
+                    'rt' => $pelanggan->rt ?? '-',
+                    'rw' => $pelanggan->rw ?? '-',
+                    'desa' => $pelanggan->desa ?? '-',
+                    'kecamatan' => $pelanggan->kecamatan ?? '-',
+                    'kabupaten' => $pelanggan->kabupaten ?? '-',
+                    'provinsi' => $pelanggan->provinsi ?? '-',
+                    'kode_pos' => $pelanggan->kode_pos ?? '-',
+                    'paket' => [
+                        'id' => $paket->id ?? null,
+                        'nama_paket' => $paket->nama_paket ?? '-',
+                        'harga' => $paket->harga ?? 0,
+                        'kecepatan' => $paket->kecepatan ?? 0,
+                        'masa_pembayaran' => $paket->masa_pembayaran ?? 0,
+                        'durasi' => $paket->durasi ?? 0,
+                    ],
+                    'tanggal_mulai' => $item->tanggal_mulai ?? null,
+                    'tanggal_berakhir' => $item->tanggal_berakhir ?? null,
+                    'status_pembayaran' => $item->status_pembayaran ?? 'belum bayar',
+                    'type_pembayaran' => $item->rekening->nama_bank ?? '-',
+                    'tanggal_pembayaran' => $item->tanggal_pembayaran ?? '-',
+                    'bukti_pembayaran' => $item->bukti_pembayaran ?? '-',
+                    'kwitansi' => $kwitansiUrl,
+                    'no_whatsapp' => $pelanggan->no_whatsapp ?? '08xxxxxxxxxx',
+                    'catatan' => $item->catatan ?? '-',
+                ];
+            });
+
+        // Ambil list unik untuk filter dropdown
+        $kabupatenList = $pelanggan->pluck('kabupaten')->unique();
+        $kecamatanList = $pelanggan->pluck('kecamatan')->unique();
+
+        // Statistik
+        $totalCustomer = Tagihan::where('status_pembayaran', 'lunas')
+    ->distinct('pelanggan_id')
+    ->count('pelanggan_id');         $lunas = Tagihan::where('status_pembayaran', 'lunas')->count();
+        $belumLunas = Tagihan::where('status_pembayaran', '!=', 'lunas')->count();
+        $totalPaket = $paket->count();
+
+        return view('content.apps.Tagihan.tagihan-lunas', compact(
+            'tagihans',
+            'pelanggan',
+            'paket',
+            'totalCustomer',
+            'lunas',
+            'belumLunas',
+            'totalPaket',
+            'kabupatenList',
+            'kecamatanList'
+        ));
+    }
+
+
+
+
+ 
 
 
     /**
@@ -531,66 +583,114 @@ if (!empty($item->kwitansi)) {
     }
 
 
-public function store(Request $request)
-{
-    $request->validate([
-        'pelanggan_id' => 'required|exists:pelanggans,id',
-        'paket_id' => 'required|exists:pakets,id',
-        'tanggal_mulai' => 'required|date',
-        'tanggal_berakhir' => 'nullable|date',
-        'catatan' => 'nullable|string',
-    ]);
+ public function store(Request $request)
+    {
+        $request->validate([
+            'pelanggan_id' => 'required|exists:pelanggans,id',
+            'paket_id' => 'required|exists:pakets,id',
+            'tanggal_mulai' => 'required|date',
+            'tanggal_berakhir' => 'nullable|date',
+            'catatan' => 'nullable|string',
+        ]);
 
-    $paket = Paket::findOrFail($request->paket_id);
-    $tanggalMulai = \Carbon\Carbon::parse($request->tanggal_mulai);
-    $tanggalBerakhir = $request->tanggal_berakhir
-        ? \Carbon\Carbon::parse($request->tanggal_berakhir)
-        : $tanggalMulai->copy()->addDays($paket->masa_pembayaran);
+        $paket = Paket::findOrFail($request->paket_id);
+        $tanggalMulai = \Carbon\Carbon::parse($request->tanggal_mulai);
+        $tanggalBerakhir = $request->tanggal_berakhir
+            ? \Carbon\Carbon::parse($request->tanggal_berakhir)
+            : $tanggalMulai->copy()->addDays($paket->masa_pembayaran);
 
-    $tagihan = Tagihan::create([
-        'pelanggan_id' => $request->pelanggan_id,
-        'paket_id' => $request->paket_id,
-        'harga' => $paket->harga,
-        'tanggal_mulai' => $tanggalMulai->format('Y-m-d'),
-        'tanggal_berakhir' => $tanggalBerakhir->format('Y-m-d'),
-        'status_pembayaran' => 'belum bayar',
-        'catatan' => $request->catatan,
-    ]);
+        $tagihan = Tagihan::create([
+            'pelanggan_id' => $request->pelanggan_id,
+            'paket_id' => $request->paket_id,
+            'harga' => $paket->harga,
+            'tanggal_mulai' => $tanggalMulai->format('Y-m-d'),
+            'tanggal_berakhir' => $tanggalBerakhir->format('Y-m-d'),
+            'status_pembayaran' => 'belum bayar',
+            'catatan' => $request->catatan,
+        ]);
 
-    $pelanggan = Pelanggan::find($request->pelanggan_id);
+        $pelanggan = Pelanggan::find($request->pelanggan_id);
 
-    // Kirim push notification jika SID tersedia
-    if ($pelanggan && $pelanggan->webpushr_sid) {
-        $ch = curl_init('https://api.webpushr.com/v1/notification/send/sid');
+        // Kirim push notification jika SID tersedia
+        if ($pelanggan && $pelanggan->webpushr_sid) {
+            $ch = curl_init('https://api.webpushr.com/v1/notification/send/sid');
 
-        $payload = [
-    'title' => 'Pemberitahuan untuk Anda',
-    'message' => "Halo {$pelanggan->nama}, kami baru saja menerbitkan tagihan untuk Anda. Silakan cek detailnya.",
-    'target_url' => url('https://layanan.jernih.net.id/dashboard/customer/tagihan'),
-    'sid' => $pelanggan->webpushr_sid,
-];
+            $payload = [
+                'title' => 'Pemberitahuan untuk Anda',
+                'message' => "Halo {$pelanggan->nama}, kami baru saja menerbitkan tagihan untuk Anda. Silakan cek detailnya.",
+                'target_url' => url('https://layanan.jernih.net.id/dashboard/customer/tagihan'),
+                'sid' => $pelanggan->webpushr_sid,
+            ];
 
-        $headers = [
-            'Content-Type: application/json',
-            'webpushrKey: 2ee12b373a17d9ba5f44683cb42d4279',
-            'webpushrAuthToken: 116294',
-        ];
+            $headers = [
+                'Content-Type: application/json',
+                'webpushrKey: 2ee12b373a17d9ba5f44683cb42d4279',
+                'webpushrAuthToken: 116294',
+            ];
 
-        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
-        $response = curl_exec($ch);
+            $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $curlError = curl_error($ch);
+            
+            curl_close($ch);
 
+            // Decode response
+            $responseData = json_decode($response, true);
+            
+            // Log semua detail response
+            Log::info('Webpushr Response', [
+                'pelanggan_id' => $pelanggan->id,
+                'pelanggan_nama' => $pelanggan->nama,
+                'sid' => $pelanggan->webpushr_sid,
+                'http_code' => $httpCode,
+                'curl_error' => $curlError,
+                'response' => $responseData,
+                'payload_sent' => $payload
+            ]);
 
+            // Cek status response dan tentukan message
+            if ($httpCode == 200 && isset($responseData['success']) && $responseData['success']) {
+                // API sukses dipanggil
+                if (isset($responseData['sent']) && $responseData['sent'] > 0) {
+                    // Notifikasi berhasil terkirim
+                    $message = 'Tagihan berhasil ditambahkan dan notifikasi terkirim!';
+                } else {
+                    // API sukses tapi notifikasi gagal/ignored
+                    Log::warning('Webpushr notification tidak terkirim', [
+                        'pelanggan_id' => $pelanggan->id,
+                        'failed' => $responseData['failed'] ?? 0,
+                        'ignored' => $responseData['ignored'] ?? 0,
+                        'sent' => $responseData['sent'] ?? 0,
+                        'message' => $responseData['message'] ?? 'No message'
+                    ]);
+                    $message = 'Tagihan berhasil ditambahkan, tapi notifikasi gagal terkirim. Periksa subscription pelanggan.';
+                }
+            } else {
+                // API error
+                Log::error('Webpushr API error', [
+                    'pelanggan_id' => $pelanggan->id,
+                    'http_code' => $httpCode,
+                    'curl_error' => $curlError,
+                    'response' => $responseData
+                ]);
+                $message = 'Tagihan berhasil ditambahkan, tapi notifikasi gagal terkirim (API error).';
+            }
+        } else {
+            $message = 'Tagihan berhasil ditambahkan (tanpa notifikasi - SID tidak tersedia).';
+            
+            Log::info('Tagihan dibuat tanpa notifikasi', [
+                'pelanggan_id' => $request->pelanggan_id,
+                'reason' => $pelanggan ? 'SID tidak tersedia' : 'Pelanggan tidak ditemukan'
+            ]);
+        }
 
-        curl_close($ch);
+        return redirect()->back()->with('success', $message);
     }
-
-    return redirect()->back()->with('success', 'Tagihan berhasil ditambahkan dan notifikasi terkirim!');
-}
-
 
 
     private function sendOneSignalNotification($playerId, $title, $message)
@@ -723,6 +823,21 @@ public function store(Request $request)
 }
 
 
+
+
+
+public function export(Request $request)
+    {
+        $search = $request->input('search');
+        
+        // HANYA EXPORT YANG LUNAS
+        $filename = 'Tagihan_Lunas_' . now()->format('Y-m-d_His') . '.xlsx';
+        
+        return Excel::download(
+            new BayarExport($search, 'lunas'), // Status: lunas
+            $filename
+        );
+    }
 
 
 

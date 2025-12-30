@@ -866,16 +866,36 @@ document.addEventListener("DOMContentLoaded", function () {
 <div class="container-fluid px-4 py-4">
   <!-- Main Table Card -->
   <div class="card border-0 shadow-sm">
-    <div class="card-header-custom">
-        <div class="d-flex flex-wrap justify-content-between align-items-center">
-            <div>
-                <h4 class="mb-1 fw-bold">
-                    <i class="ri-bill-line me-2"></i>Daftar Tagihan Lunas
-                </h4>
-                <p class="mb-0 opacity-75 small">Kelola seluruh tagihan pelanggan yang sudah lunas</p>
-            </div>
+ <div class="card-header-custom">
+    <div class="d-flex flex-wrap justify-content-between align-items-center">
+        <div>
+            <h4 class="mb-1 fw-bold">
+                <i class="ri-bill-line me-2"></i>Daftar Tagihan Lunas
+            </h4>
+            <p class="mb-0 opacity-75 small">Kelola seluruh tagihan pelanggan yang sudah lunas</p>
+        </div>
+        
+        <!-- Button Actions -->
+        <div class="d-flex gap-2 flex-wrap">
+            <!-- Total Customer Badge -->
+            @if(isset($totalCustomer) && $totalCustomer > 0)
+            <span class="badge bg-label-primary" style="padding: 10px 20px; font-size: 0.9rem;">
+                <i class="ri-group-line me-1"></i>
+                {{ $totalCustomer }} Customer
+            </span>
+            @endif
+            
+            <!-- Button Export Excel -->
+            <a href="{{ route('tagihan.bayar.export', ['search' => request('search')]) }}" 
+               class="btn btn-success" 
+               title="Export ke Excel">
+                <i class="ri-file-excel-2-line me-1"></i>Export Excel
+            </a>
+         
         </div>
     </div>
+</div>
+
 
     <div class="card-body p-0">
         <div class="card-datatable table-responsive p-3">

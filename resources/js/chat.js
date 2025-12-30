@@ -12,10 +12,77 @@ document.addEventListener('DOMContentLoaded', function() {
     const chatForm = document.getElementById('chatForm');
     const messageInput = document.getElementById('messageInput');
     const sendButton = document.getElementById('sendButton');
+    const mediaInput = document.getElementById('mediaInput');
+    const attachButton = document.getElementById('attachButton');
+    const mediaPreview = document.getElementById('mediaPreview');
+    
+    let selectedMediaFile = null;
     
     if (!chatMessages || !chatForm) {
         return;
     }
+    
+    // Setup attach button click
+    if (attachButton && mediaInput) {
+        attachButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            mediaInput.click();
+        });
+        
+        mediaInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                selectedMediaFile = file;
+                showMediaPreview(file);
+            }
+        });
+    }
+    
+    // Show media preview
+    function showMediaPreview(file) {
+        if (!mediaPreview) return;
+        
+        const isImage = file.type.startsWith('image/');
+        const isVideo = file.type.startsWith('video/');
+        
+        let previewHTML = '';
+        
+        if (isImage) {
+            const url = URL.createObjectURL(file);
+            previewHTML = `
+                <div class="media-preview-container">
+                    <img src="${url}" alt="Preview" style="max-height: 100px; border-radius: 8px;">
+                    <button type="button" class="remove-media-btn" onclick="window.clearMediaPreview()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                    <span class="media-filename">${file.name}</span>
+                </div>
+            `;
+        } else if (isVideo) {
+            previewHTML = `
+                <div class="media-preview-container">
+                    <i class="fas fa-video" style="font-size: 24px; color: #3b82f6;"></i>
+                    <button type="button" class="remove-media-btn" onclick="window.clearMediaPreview()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                    <span class="media-filename">${file.name}</span>
+                </div>
+            `;
+        }
+        
+        mediaPreview.innerHTML = previewHTML;
+        mediaPreview.style.display = 'block';
+    }
+    
+    // Clear media preview
+    window.clearMediaPreview = function() {
+        selectedMediaFile = null;
+        if (mediaInput) mediaInput.value = '';
+        if (mediaPreview) {
+            mediaPreview.innerHTML = '';
+            mediaPreview.style.display = 'none';
+        }
+    };
     
     const isAdmin = window.isAdmin || false;
     const userId = window.userId;
@@ -138,11 +205,39 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
+        // Render media content
+        let mediaContent = '';
+        if (message.media_url && message.media_type) {
+            if (message.media_type === 'image') {
+                mediaContent = `
+                    <div class="message-media">
+                        <img src="${message.media_url}" alt="Image" onclick="window.open('${message.media_url}', '_blank')" style="max-width: 250px; max-height: 200px; border-radius: 8px; cursor: pointer; margin-bottom: 6px;">
+                    </div>
+                `;
+            } else if (message.media_type === 'video') {
+                mediaContent = `
+                    <div class="message-media">
+                        <video controls style="max-width: 250px; max-height: 200px; border-radius: 8px; margin-bottom: 6px;">
+                            <source src="${message.media_url}" type="video/mp4">
+                            Browser tidak mendukung video.
+                        </video>
+                    </div>
+                `;
+            }
+        }
+        
+        // Text content (only show if not empty)
+        let textContent = '';
+        if (message.message && message.message.trim() !== '') {
+            textContent = `<div class="message-text">${escapeHtml(message.message)}</div>`;
+        }
+        
         messageDiv.innerHTML = `
             <div class="message-avatar">${initials}</div>
             <div class="message-bubble">
                 <div class="message-content">
-                    <div class="message-text">${escapeHtml(message.message)}</div>
+                    ${mediaContent}
+                    ${textContent}
                     <div class="message-info">
                         ${statusIcon}
                         ${time}
@@ -277,14 +372,22 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 100);
     }
     
-    // Send message
+    // Send message with optional media
     chatForm.addEventListener('submit', function(e) {
         e.preventDefault();
         
         const message = messageInput.value.trim();
-        if (!message) return;
         
-        const data = { message };
+        // Check if we have message or media
+        if (!message && !selectedMediaFile) return;
+        
+        // Use FormData for file upload
+        const formData = new FormData();
+        formData.append('message', message);
+        
+        if (selectedMediaFile) {
+            formData.append('media', selectedMediaFile);
+        }
         
         if (isAdmin) {
             const receiverId = document.getElementById('receiverId').value;
@@ -292,13 +395,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 alert('Pilih user terlebih dahulu');
                 return;
             }
-            data.receiver_id = receiverId;
+            formData.append('receiver_id', receiverId);
         }
         
         sendButton.disabled = true;
         messageInput.value = '';
         
-        axios.post('/chat/send', data)
+        // Clear media preview
+        window.clearMediaPreview();
+        
+        axios.post('/chat/send', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        })
             .then(response => {
                 appendMessage(response.data.message, false);
                 scrollToBottom();
@@ -308,7 +418,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             })
             .catch(error => {
-                alert('Gagal mengirim pesan');
+                console.error('Send error:', error);
+                alert('Gagal mengirim pesan: ' + (error.response?.data?.error || 'Unknown error'));
             })
             .finally(() => {
                 sendButton.disabled = false;
@@ -564,4 +675,3 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 });
-

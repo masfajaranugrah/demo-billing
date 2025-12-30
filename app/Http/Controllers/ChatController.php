@@ -52,7 +52,7 @@ class ChatController extends Controller
         // Gabungkan dan hilangkan duplikat
         $userIdsFromMessages = $senderIds->merge($receiverIds)
             ->unique()
-            ->filter(function($id) use ($user) {
+            ->filter(function ($id) use ($user) {
                 // Exclude admin sendiri
                 return $id !== $user->id;
             })
@@ -62,11 +62,11 @@ class ChatController extends Controller
         $users = User::whereIn('id', $userIdsFromMessages)
             ->whereNotIn('role', ['administrator', 'admin', 'customer_service'])
             ->get()
-            ->map(function($user) {
+            ->map(function ($user) {
                 return [
                     'id' => $user->id,
                     'name' => $user->name,
-		    'nomer_id' => $user->nomer_id,
+                    'nomer_id' => $user->nomer_id,
                     'type' => 'user',
                     'created_at' => $user->created_at,
                 ];
@@ -75,11 +75,11 @@ class ChatController extends Controller
         // Ambil pelanggans yang pernah chat
         $pelanggans = Pelanggan::whereIn('id', $userIdsFromMessages)
             ->get()
-            ->map(function($pelanggan) {
+            ->map(function ($pelanggan) {
                 return [
                     'id' => $pelanggan->id,
                     'name' => $pelanggan->nama_lengkap ?? 'Pelanggan',
-		    'nomer_id' => $pelanggan->nomer_id,
+                    'nomer_id' => $pelanggan->nomer_id,
                     'type' => 'pelanggan',
                     'created_at' => $pelanggan->created_at,
                 ];
@@ -89,20 +89,20 @@ class ChatController extends Controller
         $contacts = $users->concat($pelanggans);
 
         // Sort by last message timestamp (pesan terbaru muncul paling atas)
-        $contacts = $contacts->map(function($contact) {
+        $contacts = $contacts->map(function ($contact) {
             // Ambil pesan terakhir dari/ke user ini (tidak harus dengan admin yang login)
-            $lastMessage = Message::where(function($query) use ($contact) {
+            $lastMessage = Message::where(function ($query) use ($contact) {
                 $query->where('sender_id', $contact['id'])
-                      ->orWhere('receiver_id', $contact['id']);
+                    ->orWhere('receiver_id', $contact['id']);
             })
-            ->orderBy('created_at', 'desc')
-            ->first();
+                ->orderBy('created_at', 'desc')
+                ->first();
 
             $contact['last_message_at'] = $lastMessage ? $lastMessage->created_at : $contact['created_at'];
             return $contact;
         })
-        ->sortByDesc('last_message_at')
-        ->values();
+            ->sortByDesc('last_message_at')
+            ->values();
 
         return view('content.apps.chat.admin.chat', ['users' => $contacts]);
     }
@@ -136,18 +136,18 @@ class ChatController extends Controller
 
         if ($isAdmin && $userId) {
             // Admin melihat chat dengan user/pelanggan tertentu
-            $messages = Message::where(function($query) use ($userId, $user) {
+            $messages = Message::where(function ($query) use ($userId, $user) {
                 // Pesan dari user/pelanggan ke admin
                 $query->where('sender_id', $userId)
-                      ->where('receiver_id', $user->id);
+                    ->where('receiver_id', $user->id);
             })
-            ->orWhere(function($query) use ($userId, $user) {
-                // Pesan dari admin ke user/pelanggan
-                $query->where('sender_id', $user->id)
-                      ->where('receiver_id', $userId);
-            })
-            ->orderBy('created_at', 'asc')
-            ->get();
+                ->orWhere(function ($query) use ($userId, $user) {
+                    // Pesan dari admin ke user/pelanggan
+                    $query->where('sender_id', $user->id)
+                        ->where('receiver_id', $userId);
+                })
+                ->orderBy('created_at', 'asc')
+                ->get();
         } else {
             // Pelanggan/User melihat chat dengan admin
             $adminId = User::whereIn('role', ['administrator', 'admin', 'customer_service'])->first()->id ?? null;
@@ -156,16 +156,16 @@ class ChatController extends Controller
                 return response()->json(['error' => 'Admin not found'], 404);
             }
 
-            $messages = Message::where(function($query) use ($user, $adminId) {
+            $messages = Message::where(function ($query) use ($user, $adminId) {
                 $query->where('sender_id', $user->id)
-                      ->where('receiver_id', $adminId);
+                    ->where('receiver_id', $adminId);
             })
-            ->orWhere(function($query) use ($user, $adminId) {
-                $query->where('sender_id', $adminId)
-                      ->where('receiver_id', $user->id);
-            })
-            ->orderBy('created_at', 'asc')
-            ->get();
+                ->orWhere(function ($query) use ($user, $adminId) {
+                    $query->where('sender_id', $adminId)
+                        ->where('receiver_id', $user->id);
+                })
+                ->orderBy('created_at', 'asc')
+                ->get();
         }
 
         return response()->json($messages);
@@ -176,20 +176,20 @@ class ChatController extends Controller
         // Untuk admin mendapatkan list semua kontak (users + pelanggans)
         $users = User::whereNotIn('role', ['administrator', 'admin', 'customer_service'])
             ->get()
-            ->map(function($user) {
+            ->map(function ($user) {
                 return [
                     'id' => $user->id,
-		    'nomer_id' => $user->nomer_id,
+                    'nomer_id' => $user->nomer_id,
                     'name' => $user->name,
                     'type' => 'user',
                 ];
             });
 
-        $pelanggans = Pelanggan::all()->map(function($pelanggan) {
+        $pelanggans = Pelanggan::all()->map(function ($pelanggan) {
             return [
                 'id' => $pelanggan->id,
                 'name' => $pelanggan->nama_lengkap ?? 'Pelanggan',
-		
+
                 'nomer_id' => $pelanggan->nomer_id ?? 'Pelanggan',
 
                 'type' => 'pelanggan',
@@ -201,120 +201,157 @@ class ChatController extends Controller
         return response()->json($contacts);
     }
 
-  /**
- * Send a new message
- */
-/**
- * Send a new message
- */
-public function send(Request $request)
-{
-    $user = $this->getAuthUser();
+    /**
+     * Send a new message
+     */
+    /**
+     * Send a new message (with optional media upload)
+     */
+    public function send(Request $request)
+    {
+        $user = $this->getAuthUser();
 
-    if (!$user) {
-        return response()->json(['error' => 'Unauthenticated'], 401);
-    }
-
-    // Validasi berbeda untuk admin dan user
-    $isAdmin = in_array($user->role, ['administrator', 'admin', 'customer_service']);
-
-    if ($isAdmin) {
-        $request->validate([
-            'message' => 'required|string|max:5000',
-            'receiver_id' => 'required|string',
-        ]);
-        $receiverId = $request->receiver_id;
-
-        // Validasi receiver_id ada di users atau pelanggans
-        $receiverExists = User::find($receiverId) || Pelanggan::find($receiverId);
-        if (!$receiverExists) {
-            return response()->json(['error' => 'Receiver not found'], 404);
-        }
-    } else {
-        $request->validate([
-            'message' => 'required|string|max:5000',
-        ]);
-
-        // User/Pelanggan mengirim ke admin
-        $admin = User::whereIn('role', ['administrator', 'admin', 'customer_service'])->first();
-
-        if (!$admin) {
-            return response()->json(['error' => 'Admin not found'], 404);
+        if (!$user) {
+            return response()->json(['error' => 'Unauthenticated'], 401);
         }
 
-        $receiverId = $admin->id;
-    }
+        // Validasi berbeda untuk admin dan user
+        $isAdmin = in_array($user->role, ['administrator', 'admin', 'customer_service']);
 
-    // Simpan message
-    $message = Message::create([
-        'sender_id' => $user->id,
-        'receiver_id' => $receiverId,
-        'message' => $request->message,
-        'is_read' => false,
-    ]);
-
-    // ===== Kirim push notification ke penerima pesan =====
-    $receiver = Pelanggan::find($receiverId);
-    if (!$receiver) {
-        $receiver = User::find($receiverId);
-    }
-
-    if ($receiver && $receiver->webpushr_sid) {
-        $end_point = 'https://api.webpushr.com/v1/notification/send/sid';
-
-        $http_header = [
-            'Content-Type: application/json',
-            'webpushrKey: 2ee12b373a17d9ba5f44683cb42d4279',
-            'webpushrAuthToken: 116294',
+        // Base validation rules (size driven by env)
+        $maxKb = (int) env('CHAT_MEDIA_MAX_KB', 20480); // default 20MB
+        $allowedMimes = env('CHAT_MEDIA_MIMES', 'jpg,jpeg,png,gif,webp,mp4,webm,mov');
+        $rules = [
+            'media' => 'nullable|file|mimes:'.$allowedMimes.'|max:'.$maxKb,
         ];
 
-        $senderName = $user->nama_lengkap ?? $user->name ?? 'User';
+        if ($isAdmin) {
+            $rules['message'] = 'nullable|string|max:5000';
+            $rules['receiver_id'] = 'required|string';
+        } else {
+            $rules['message'] = 'nullable|string|max:5000';
+        }
 
-      $req_data = [
-    'title' => 'Pesan Baru',
-    'message' => substr($request->message, 0, 50) . (strlen($request->message) > 50 ? '...' : ''),
-    'target_url' => url('https://layanan.jernih.net.id/dashboard/customer/chat'),
-    'sid' => $receiver->webpushr_sid,
-];
+        $request->validate($rules);
 
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_HTTPHEADER, $http_header);
-        curl_setopt($ch, CURLOPT_URL, $end_point);
-        curl_setopt($ch, CURLOPT_POST, 1);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($req_data));
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        // Either message or media must be present
+        if (!$request->message && !$request->hasFile('media')) {
+            return response()->json(['error' => 'Message or media is required'], 422);
+        }
 
-        $response = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
+        if ($isAdmin) {
+            $receiverId = $request->receiver_id;
 
-        Log::info('Webpushr Push Notification', [
+            // Validasi receiver_id ada di users atau pelanggans
+            $receiverExists = User::find($receiverId) || Pelanggan::find($receiverId);
+            if (!$receiverExists) {
+                return response()->json(['error' => 'Receiver not found'], 404);
+            }
+        } else {
+            // User/Pelanggan mengirim ke admin
+            $admin = User::whereIn('role', ['administrator', 'admin', 'customer_service'])->first();
+
+            if (!$admin) {
+                return response()->json(['error' => 'Admin not found'], 404);
+            }
+
+            $receiverId = $admin->id;
+        }
+
+        // Handle media upload
+        $mediaPath = null;
+        $mediaType = null;
+        $mediaOriginalName = null;
+
+        if ($request->hasFile('media')) {
+            $file = $request->file('media');
+            $mediaOriginalName = $file->getClientOriginalName();
+            $extension = strtolower($file->getClientOriginalExtension());
+
+            // Determine media type
+            if (in_array($extension, ['jpg', 'jpeg', 'png', 'gif', 'webp'])) {
+                $mediaType = 'image';
+            } elseif (in_array($extension, ['mp4', 'webm', 'mov'])) {
+                $mediaType = 'video';
+            }
+
+            // Store file
+            $mediaPath = $file->store('chat-media', 'public');
+        }
+
+        // Simpan message
+        $message = Message::create([
+            'sender_id' => $user->id,
             'receiver_id' => $receiverId,
-            'webpushr_sid' => $receiver->webpushr_sid,
-            'http_code' => $httpCode,
-            'response' => $response,
+            'message' => $request->message ?? '',
+            'media_path' => $mediaPath,
+            'media_type' => $mediaType,
+            'media_original_name' => $mediaOriginalName,
+            'is_read' => false,
         ]);
+
+        // ===== Kirim push notification ke penerima pesan =====
+        $receiver = Pelanggan::find($receiverId);
+        if (!$receiver) {
+            $receiver = User::find($receiverId);
+        }
+
+        if ($receiver && $receiver->webpushr_sid) {
+            $end_point = 'https://api.webpushr.com/v1/notification/send/sid';
+
+            $http_header = [
+                'Content-Type: application/json',
+                'webpushrKey: 2ee12b373a17d9ba5f44683cb42d4279',
+                'webpushrAuthToken: 116294',
+            ];
+
+            $senderName = $user->nama_lengkap ?? $user->name ?? 'User';
+
+            $req_data = [
+                'title' => 'Pesan Baru',
+                'message' => substr($request->message, 0, 50) . (strlen($request->message) > 50 ? '...' : ''),
+                'target_url' => url('https://layanan.jernih.net.id/dashboard/customer/chat'),
+                'sid' => $receiver->webpushr_sid,
+            ];
+
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_HTTPHEADER, $http_header);
+            curl_setopt($ch, CURLOPT_URL, $end_point);
+            curl_setopt($ch, CURLOPT_POST, 1);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($req_data));
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+            $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+
+            Log::info('Webpushr Push Notification', [
+                'receiver_id' => $receiverId,
+                'webpushr_sid' => $receiver->webpushr_sid,
+                'http_code' => $httpCode,
+                'response' => $response,
+            ]);
+        }
+
+        // FIXED: Assign fresh() back to $message
+        $message = $message->fresh();
+        $message->sender; // Trigger accessor
+
+        Log::info('?? Broadcasting MessageSent', [
+            'message_id' => $message->id,
+            'sender_id' => $message->sender_id,
+            'receiver_id' => $message->receiver_id,
+            'channel' => 'chat.' . $message->receiver_id,
+        ]);
+
+        // Broadcast event ke receiver channel
+        broadcast(new MessageSent($message));
+
+        return response()->json([
+            'success' => true,
+            'message' => $message,
+        ], 201);
     }
-
-    // FIXED: Assign fresh() back to $message
-    $message = $message->fresh();
-    $message->sender; // Trigger accessor
-
-    Log::info('?? Broadcasting MessageSent', [
-        'message_id' => $message->id,
-        'sender_id' => $message->sender_id,
-        'receiver_id' => $message->receiver_id,
-        'channel' => 'chat.' . $message->receiver_id,
-    ]);
-
-    // Broadcast event ke receiver channel
-    broadcast(new MessageSent($message));
-
-    return response()->json([
-        'success' => true,
-        'message' => $message,
-    ], 201);
-}
 
 
 

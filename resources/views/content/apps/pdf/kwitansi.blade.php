@@ -23,7 +23,7 @@ body {
   border: 2px solid #000;
   padding: 30px 30px;
   background: #fff;
-  position: relative; /* penting agar footer absolute tetap di dalam wrapper */
+  position: relative;
 }
 
 /* ===================== */
@@ -127,7 +127,7 @@ hr {
 /* ===================== */
 .footer {
   position: absolute;
-  top: 230px; /* jarak dari bawah halaman */
+  top: 230px;
   right: 50px;
   text-align: center;
   font-size: 13px;
@@ -168,7 +168,7 @@ hr {
     margin: 10mm;
   }
 
-  body { 
+  body {
     padding: 0;
     margin: 0;
     background: #fff;
@@ -176,7 +176,7 @@ hr {
     print-color-adjust: exact !important;
   }
 
-  .wrapper { 
+  .wrapper {
     border: 2px solid #000 !important;
     margin: 0;
     padding: 20px 30px;
@@ -217,24 +217,37 @@ $nominal = $tagihan->paket->harga ?? 0;
 $formattedRupiah = number_format($nominal, 0, ',', '.');
 
 // Terbilang
-$fmt = new \NumberFormatter('id', \NumberFormatter::SPELLOUT); // tambahkan backslash
+$fmt = new \NumberFormatter('id', \NumberFormatter::SPELLOUT);
 $terbilang = ucfirst($fmt->format($nominal)) . ' Rupiah';
 
 // Tanggal sekarang dalam bahasa Indonesia
 $tanggalSekarang = \Carbon\Carbon::now()->locale('id')->isoFormat('DD MMMM YYYY');
 
-// Bulan & Tahun dari tanggal_berakhir DB
-if(!empty($tagihan->tanggal_berakhir)) {
-    $tgl = \Carbon\Carbon::parse($tagihan->tanggal_berakhir);
-    $bulanTahun = $tgl->locale('id')->isoFormat('MMMM YYYY'); // Desember 2025
+// Ambil Bulan & Tahun dari tanggal_mulai
+if(!empty($tagihan->tanggal_mulai)) {
+    $tglMulai = \Carbon\Carbon::parse($tagihan->tanggal_mulai);
+    $bulanTahun = $tglMulai->locale('id')->isoFormat('MMMM YYYY'); // Desember 2025
 } else {
     $bulanTahun = '-';
 }
 @endphp
 
+@php
+// Tentukan nama kota berdasarkan prefix nomer_id
+$nomerId = strtoupper($tagihan->pelanggan->nomer_id ?? '-');
+$namaKota = 'Klaten'; // default
+
+if (str_starts_with($nomerId, 'JMK-GK')) {
+    $namaKota = 'Gunung Kidul';
+} elseif (str_starts_with($nomerId, 'JMK-')) {
+    $namaKota = 'Klaten';
+} elseif (str_starts_with($nomerId, 'JMK.')) {
+    $namaKota = 'Klaten';
+}
+@endphp
 
 <div class="wrapper">
-  
+
   <div class="header">
     <div class="info-box">
       <div class="logo">
@@ -257,29 +270,28 @@ if(!empty($tagihan->tanggal_berakhir)) {
           <td>:</td>
           <td><span class="highlight"><strong> {{ $terbilang }}</strong></span></td>
         </tr>
-        <tr> 
+        <tr>
           <td>Untuk Pembayaran</td>
           <td>:</td>
-          <td><strong>Tagihan pembayaran bulan Desember 2025</strong></td>
+          <td><strong>Tagihan pembayaran bulan {{ $bulanTahun }}</strong></td>
         </tr>
       </table>
 
       <hr><hr><hr>
 
       <div class="amount-box">
-  <div class="amount">Rp.{{ $formattedRupiah }}</div>
+        <div class="amount">Rp.{{ $formattedRupiah }}</div>
       </div>
     </div>
   </div>
 
   <!-- Footer tanda tangan -->
   <div class="footer">
-  <div class="date">Kalten, {{ $tanggalSekarang }}</div>
+    <div class="date">{{ $namaKota }}, {{ $tanggalSekarang }}</div>
     <div class="role">PT. JERNIH MULTI KOMUNIKASI</div>
     <img class="ttd-img" src="{{ public_path('assets/img/jmk.png') }}" alt="Tanda Tangan">
     <div> <span class="name">(Rohmat Setia Nursemedi</span> )</br> <span class="position">Direktur</span> </div>
-
-   </div>
+  </div>
 
 </div>
 </body>

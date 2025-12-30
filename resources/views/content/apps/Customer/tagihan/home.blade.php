@@ -931,11 +931,11 @@ body.modal-open {
     .quick-actions {
         gap: 10px;
     }
-    
+
     .iklan-modal-content {
         max-width: 95%;
     }
-    
+
     .iklan-modal-image {
         height: 200px;
     }
@@ -946,11 +946,32 @@ body.modal-open {
 <body>
 <div class="container">
     <!-- Hero Section -->
-    <div class="hero-section">
-        <div class="hero-greeting">Selamat Datang,</div>
-        <div class="hero-name">{{ $user->nama_lengkap ?? 'Pelanggan' }}</div>
-        <div class="hero-subtitle">Kelola tagihan Anda dengan mudah</div>
+<!-- Hero Section -->
+<div class="hero-section">
+    @php
+        $hour = \Carbon\Carbon::now('Asia/Jakarta')->format('H');
+        if ($hour >= 5 && $hour < 11) {
+            $greeting = 'Selamat Pagi';
+            $icon = 'bi-brightness-high-fill';
+        } elseif ($hour >= 11 && $hour < 15) {
+            $greeting = 'Selamat Siang';
+            $icon = 'bi-sun-fill';
+        } elseif ($hour >= 15 && $hour < 18) {
+            $greeting = 'Selamat Sore';
+            $icon = 'bi-sunset-fill';
+        } else {
+            $greeting = 'Selamat Malam';
+            $icon = 'bi-moon-stars-fill';
+        }
+    @endphp
+
+    <div class="hero-greeting">
+        {{ $greeting }}, <i class="bi {{ $icon }}"></i>
     </div>
+    <div class="hero-name">{{ $user->nama_lengkap ?? 'Pelanggan' }}</div>
+    <div class="hero-subtitle">Kelola tagihan Anda dengan mudah</div>
+</div>
+
 
     <!-- Stats Cards -->
     <div class="stats-section">
@@ -1014,31 +1035,40 @@ body.modal-open {
 
     <!-- Quick Actions -->
     <div class="section-title">Menu Cepat</div>
-    <div class="quick-actions">
-        <a href="/dashboard/customer/tagihan" class="action-card">
-            <div class="action-icon primary">
-                <i class="bi bi-receipt"></i>
-            </div>
-            <div class="action-title">Tagihan</div>
-            <div class="action-subtitle">Lihat tagihan aktif</div>
-        </a>
+  <div class="quick-actions">
+    <a href="/dashboard/customer/tagihan" class="action-card">
+        <div class="action-icon primary">
+            <i class="bi bi-receipt"></i>
+        </div>
+        <div class="action-title">Tagihan</div>
+        <div class="action-subtitle">Lihat tagihan aktif</div>
+    </a>
 
-        <a href="/dashboard/customer/tagihan/selesai" class="action-card">
-            <div class="action-icon success">
-                <i class="bi bi-file-earmark-text"></i>
-            </div>
-            <div class="action-title">Kwitansi</div>
-            <div class="action-subtitle">Riwayat pembayaran</div>
-        </a>
+    <a href="/dashboard/customer/tagihan/selesai" class="action-card">
+        <div class="action-icon success">
+            <i class="bi bi-file-earmark-text"></i>
+        </div>
+        <div class="action-title">Kwitansi</div>
+        <div class="action-subtitle">Riwayat pembayaran</div>
+    </a>
 
-        <a href="https://layanan.jernih.net.id/dashboard/customer/chat" class="action-card">
-            <div class="action-icon warning">
-                <i class="bi bi-chat-dots"></i>
-            </div>
-            <div class="action-title">Chat CS</div>
-            <div class="action-subtitle">Hubungi kami</div>
-        </a>
-    </div>
+    <a href="https://layanan.jernih.net.id/dashboard/customer/chat" class="action-card">
+        <div class="action-icon warning">
+            <i class="bi bi-chat-dots"></i>
+        </div>
+        <div class="action-title">Chat CS</div>
+        <div class="action-subtitle">Hubungi kami</div>
+    </a>
+
+    <!-- Fitur Baru: Chat Admin -->
+    <a href="" class="action-card">
+        <div class="action-icon purple">
+            <i class="bi bi-person-badge"></i>
+        </div>
+        <div class="action-title">Chat Admin</div>
+        <div class="action-subtitle">Hubungi admin</div>
+    </a>
+</div>
 
     <!-- Iklan/Informasi (Di Bawah) -->
     @if(isset($iklans) && $iklans->whereIn('type', ['informasi', 'iklan'])->count() > 0)
@@ -1238,11 +1268,11 @@ function openIklanModal(id, type, title, message, image, time) {
     const modalTitle = document.getElementById('iklan-modal-title');
     const modalMessage = document.getElementById('iklan-modal-message');
     const modalTime = document.getElementById('iklan-modal-time').querySelector('span');
-    
+
     // Set badge
     let badgeIcon = '';
     let badgeText = '';
-    
+
     if (type === 'maintenance') {
         badgeIcon = '<i class="bi bi-tools"></i>';
         badgeText = 'Maintenance';
@@ -1253,15 +1283,15 @@ function openIklanModal(id, type, title, message, image, time) {
         badgeIcon = '<i class="bi bi-megaphone"></i>';
         badgeText = 'Iklan';
     }
-    
+
     modalBadge.className = 'iklan-modal-badge ' + type;
     modalBadge.innerHTML = badgeIcon + ' ' + badgeText;
-    
+
     // Set content
     modalTitle.textContent = title;
     modalMessage.textContent = message;
     modalTime.textContent = time;
-    
+
     // Set image
     if (image) {
         modalImage.src = image;
@@ -1273,7 +1303,7 @@ function openIklanModal(id, type, title, message, image, time) {
     } else {
         modalImage.style.display = 'none';
     }
-    
+
     // Show modal
     modal.classList.add('show');
     document.body.style.overflow = 'hidden';
@@ -1296,7 +1326,7 @@ document.getElementById('iklan-modal-overlay').addEventListener('click', functio
 function openZoom(imageSrc) {
     const zoomOverlay = document.getElementById('zoom-overlay');
     const zoomImage = document.getElementById('zoom-image');
-    
+
     zoomImage.src = imageSrc;
     zoomOverlay.classList.add('show');
 }
@@ -1533,17 +1563,23 @@ setInterval(function() {
 
 function getGreeting() {
     const now = new Date();
-    const hour = now.getHours();
-    if (hour >= 0 && hour < 11) {
+    // Konversi ke WIB (UTC+7)
+    const wibOffset = 7 * 60; // offset dalam menit
+    const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+    const wibTime = new Date(utc + (wibOffset * 60000));
+    const hour = wibTime.getHours();
+
+    if (hour >= 5 && hour < 11) {
         return 'Selamat Pagi! <i class="bi bi-brightness-high-fill"></i>';
     } else if (hour >= 11 && hour < 15) {
-        return 'Selamat Siang! <i class="bi bi-cloud-sun-fill"></i>';
+        return 'Selamat Siang! <i class="bi bi-sun-fill"></i>';
     } else if (hour >= 15 && hour < 18) {
         return 'Selamat Sore! <i class="bi bi-sunset-fill"></i>';
     } else {
         return 'Selamat Malam! <i class="bi bi-moon-stars-fill"></i>';
     }
 }
+
 
 // ========== POLLING UNTUK TAGIHAN BARU ==========
 const userNomerId = "{{ $user->nomer_id }}";
@@ -1628,7 +1664,7 @@ $(document).ready(function(){
     }
 
     // Polling untuk tagihan baru (setiap jam 12 siang)
-    setTimeout(checkForNewNotifications, 2000);
+    setTimeout(checkForNewNotifications, 3000);
 setInterval(checkForNewNotifications, 21600000);
 });
 </script>

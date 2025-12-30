@@ -107,6 +107,17 @@
   color: #5a5f7d;
 }
 
+.btn-outline-secondary {
+  border: 1.5px solid #8898aa;
+  color: #8898aa;
+  background: transparent;
+}
+
+.btn-outline-secondary:hover {
+  background: #8898aa;
+  color: #ffffff;
+}
+
 /* Badges */
 .badge {
   padding: 0.4rem 0.75rem;
@@ -122,6 +133,38 @@
 
 .badge.bg-warning {
   background: linear-gradient(135deg, #ffab00 0%, #e09900 100%) !important;
+}
+
+/* Search Form */
+.search-wrapper {
+  background: #f8f9fa;
+  padding: 1.25rem;
+  border-radius: 10px;
+  margin-bottom: 1rem;
+}
+
+.input-group-text {
+  background: white;
+  border-right: none;
+  border-color: #e0e0e0;
+}
+
+.input-group .form-control {
+  border-left: none;
+  border-color: #e0e0e0;
+}
+
+.input-group .form-control:focus {
+  border-color: #696cff;
+  box-shadow: none;
+}
+
+.input-group:focus-within .input-group-text {
+  border-color: #696cff;
+}
+
+.input-group:focus-within .form-control {
+  border-color: #696cff;
 }
 
 /* Table */
@@ -436,72 +479,6 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     // ========================================
-    // SELECT2 INITIALIZATION
-    // ========================================
-    $('#pelangganSelect').select2({
-        placeholder: '-- Pilih Pelanggan --',
-        allowClear: true,
-        width: '100%',
-        dropdownParent: $('#modalTambahTagihan')
-    });
-
-    const formatDate = d => d.toISOString().split('T')[0];
-    const tglMulai = document.getElementById('tanggal_mulai');
-    if (tglMulai) {
-        tglMulai.value = formatDate(new Date());
-    }
-
-    function fillFields(selected) {
-        if (!selected || !selected.val()) {
-            $('#nama_lengkap, #alamat_jalan, #rt, #rw, #desa, #kecamatan, #kabupaten, #provinsi, #kode_pos, #no_whatsapp, #nomer_id, #paket, #harga, #masa_pembayaran, #kecepatan, #pelanggan_id, #paket_id, #tanggal_berakhir').val('');
-            return;
-        }
-
-        $('#nama_lengkap').val(selected.data('nama'));
-        $('#no_whatsapp').val(selected.data('nowhatsapp'));
-        $('#nomer_id').val(selected.data('nomorid'));
-        $('#paket').val(selected.data('paket'));
-        $('#harga').val(selected.data('harga'));
-        $('#masa_pembayaran').val(selected.data('masa'));
-        $('#kecepatan').val(selected.data('kecepatan'));
-        $('#pelanggan_id').val(selected.val());
-        $('#paket_id').val(selected.data('paket_id'));
-        $('#alamat_jalan').val(selected.data('alamat_jalan'));
-        $('#rt').val(selected.data('rt'));
-        $('#rw').val(selected.data('rw'));
-        $('#desa').val(selected.data('desa'));
-        $('#kecamatan').val(selected.data('kecamatan'));
-        $('#kabupaten').val(selected.data('kabupaten'));
-        $('#provinsi').val(selected.data('provinsi'));
-        $('#kode_pos').val(selected.data('kode_pos'));
-
-        const startDate = new Date($('#tanggal_mulai').val());
-        const endDate = new Date(startDate);
-        const masa = selected.data('masa') || selected.data('durasi');
-        if (masa) {
-            endDate.setDate(startDate.getDate() + parseInt(masa));
-            $('#tanggal_berakhir').val(formatDate(endDate));
-        }
-    }
-
-    $('#pelangganSelect').on('change', function () {
-        fillFields($(this).find('option:selected'));
-    });
-
-    if (tglMulai) {
-        tglMulai.addEventListener('change', function () {
-            fillFields($('#pelangganSelect').find('option:selected'));
-        });
-    }
-
-    $('#modalTambahTagihan').on('shown.bs.modal', function () {
-        const list = $('#pelangganSelect option').filter((_, el) => el.value);
-        if (list.length === 1) {
-            $('#pelangganSelect').val(list.val()).trigger('change');
-        }
-    });
-
-    // ========================================
     // DETAIL MODAL - MODERN UI
     // ========================================
     $(document).on('click', '.btn-detail', function(e) {
@@ -642,7 +619,7 @@ document.addEventListener("DOMContentLoaded", function () {
         if (status === 'lunas') {
             btnKonfirmasi.prop('disabled', true).removeClass('btn-success').addClass('btn-secondary').html('<i class="ri-check-circle-line me-1"></i> Sudah Lunas');
         } else {
-            btnKonfirmasi.prop('disabled', false).removeClass('btn-secondary').addClass('btn-success').html('<i class="ri-check-circle-line me-1"></i> Sudah Lunas');
+            btnKonfirmasi.prop('disabled', false).removeClass('btn-secondary').addClass('btn-success').html('<i class="ri-check-circle-line me-1"></i> Konfirmasi Lunas');
         }
         
         $('#detailModal').modal('show');
@@ -781,58 +758,6 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         });
     });
-
-    // ========================================
-    // DELETE WITH SWEETALERT
-    // ========================================
-    $(document).on('submit', '.delete-form', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        const form = this;
-
-        Swal.fire({
-            title: 'Konfirmasi Penghapusan',
-            html: '<p class="mb-0">Yakin ingin menghapus tagihan ini?<br><strong class="text-danger">Data tidak dapat dikembalikan!</strong></p>',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#f5365c',
-            cancelButtonColor: '#8898aa',
-            confirmButtonText: '<i class="ri-delete-bin-line me-1"></i>Hapus',
-            cancelButtonText: 'Batal',
-            reverseButtons: true,
-            customClass: {
-                confirmButton: 'btn btn-danger me-2',
-                cancelButton: 'btn btn-secondary'
-            },
-            buttonsStyling: false
-        }).then((result) => {
-            if (result.isConfirmed) {
-                showLoading();
-                setTimeout(() => form.submit(), 500);
-            }
-        });
-    });
-
-    // ========================================
-    // FLATPICKR
-    // ========================================
-    flatpickr("#tanggal_mulai", {
-        dateFormat: "Y-m-d",
-        defaultDate: new Date(),
-        onChange: function(selectedDates) {
-            const tanggalMulai = selectedDates[0];
-            const masaPembayaran = parseInt($('#masa_pembayaran').val()) || 0;
-            if (tanggalMulai && masaPembayaran) {
-                const tanggalBerakhir = new Date(tanggalMulai);
-                tanggalBerakhir.setDate(tanggalMulai.getDate() + masaPembayaran);
-                flatpickr("#tanggal_berakhir").setDate(tanggalBerakhir);
-            }
-        }
-    });
-
-    flatpickr("#tanggal_berakhir", {
-        dateFormat: "Y-m-d",
-    });
 });
 </script>
 @endsection
@@ -869,6 +794,43 @@ document.addEventListener("DOMContentLoaded", function () {
         </div>
         @endif
       </div>
+
+      <!-- ========================================= -->
+      <!-- FORM SEARCH -->
+      <!-- ========================================= -->
+      <div class="search-wrapper mt-3">
+        <form action="{{ url()->current() }}" method="GET">
+          <div class="row g-3 align-items-center">
+            <div class="col-md-10">
+              <div class="input-group">
+                <span class="input-group-text">
+                  <i class="ri-search-line"></i>
+                </span>
+                <input type="text" 
+                  class="form-control" 
+                  name="search" 
+                  placeholder="Cari berdasarkan Nama, No. ID, WhatsApp, Paket, Alamat, Kecamatan, Kabupaten..." 
+                  value="{{ request('search') }}"
+                  autocomplete="off">
+              </div>
+            </div>
+            <div class="col-md-2">
+              <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary flex-grow-1">
+                  <i class="ri-search-line me-1"></i>Cari
+                </button>
+                @if(request('search'))
+                <a href="{{ url()->current() }}" class="btn btn-outline-secondary" title="Reset">
+                  <i class="ri-refresh-line"></i>
+                </a>
+                @endif
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+      <!-- END FORM SEARCH -->
+
     </div>
 
     <div class="card-body p-0">
@@ -969,8 +931,16 @@ document.addEventListener("DOMContentLoaded", function () {
                 <div class="mb-3">
                   <i class="ri-inbox-line" style="font-size: 4rem; color: #ddd;"></i>
                 </div>
+                @if(request('search'))
+                <h5 class="text-muted mb-2">Tidak Ada Hasil</h5>
+                <p class="text-muted">Tidak ditemukan tagihan dengan kata kunci "<strong>{{ request('search') }}</strong>"</p>
+                <a href="{{ url()->current() }}" class="btn btn-sm btn-outline-primary mt-2">
+                  <i class="ri-refresh-line me-1"></i>Reset Pencarian
+                </a>
+                @else
                 <h5 class="text-muted mb-2">Tidak Ada Tagihan Dalam Proses Verifikasi</h5>
                 <p class="text-muted">Saat ini tidak ada tagihan yang sedang dalam proses verifikasi.</p>
+                @endif
               </td>
             </tr>
             @endforelse
@@ -984,10 +954,25 @@ document.addEventListener("DOMContentLoaded", function () {
       @if($tagihans->hasPages())
       <div class="d-flex justify-content-between align-items-center px-4 py-3 border-top bg-light">
         <div class="text-muted small">
-          Menampilkan <strong>{{ $tagihans->firstItem() }}</strong> - <strong>{{ $tagihans->lastItem() }}</strong> dari <strong>{{ $tagihans->total() }}</strong> tagihan
+          @if($tagihans->total() > 0)
+            Menampilkan <strong>{{ $tagihans->firstItem() }}</strong> - <strong>{{ $tagihans->lastItem() }}</strong> dari <strong>{{ $tagihans->total() }}</strong> tagihan
+            @if(request('search'))
+              <span class="badge bg-label-primary ms-2">
+                <i class="ri-search-line me-1"></i>Hasil pencarian: "{{ request('search') }}"
+              </span>
+            @endif
+          @endif
         </div>
         <div>
-          {{ $tagihans->onEachSide(1)->links('pagination::bootstrap-5') }}
+          {{ $tagihans->links('pagination::bootstrap-5') }}
+        </div>
+      </div>
+      @elseif(request('search'))
+      <div class="px-4 py-3 border-top bg-light">
+        <div class="text-muted small">
+          <span class="badge bg-label-primary">
+            <i class="ri-search-line me-1"></i>Hasil pencarian: "{{ request('search') }}"
+          </span>
         </div>
       </div>
       @endif

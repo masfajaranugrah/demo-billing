@@ -17,6 +17,9 @@ class Message extends Model
         'sender_id',
         'receiver_id',
         'message',
+        'media_path',
+        'media_type',
+        'media_original_name',
         'is_read',
     ];
 
@@ -26,7 +29,7 @@ class Message extends Model
         'updated_at' => 'datetime',
     ];
 
-    protected $appends = ['sender', 'receiver'];
+    protected $appends = ['sender', 'receiver', 'media_url'];
 
     protected static function boot()
     {
@@ -46,8 +49,8 @@ class Message extends Model
     {
         // Cache key untuk menghindari query berulang
         $cacheKey = "message_sender_{$this->sender_id}";
-        
-        return Cache::remember($cacheKey, 300, function() {
+
+        return Cache::remember($cacheKey, 300, function () {
             // Try users table first
             $user = User::find($this->sender_id);
             if ($user) {
@@ -58,7 +61,7 @@ class Message extends Model
                     'role' => $user->role ?? null,
                 ];
             }
-            
+
             // Try pelanggans table
             $pelanggan = Pelanggan::find($this->sender_id);
             if ($pelanggan) {
@@ -69,7 +72,7 @@ class Message extends Model
                     'role' => 'pelanggan',
                 ];
             }
-            
+
             return null;
         });
     }
@@ -81,8 +84,8 @@ class Message extends Model
     {
         // Cache key untuk menghindari query berulang
         $cacheKey = "message_receiver_{$this->receiver_id}";
-        
-        return Cache::remember($cacheKey, 300, function() {
+
+        return Cache::remember($cacheKey, 300, function () {
             // Try users table first
             $user = User::find($this->receiver_id);
             if ($user) {
@@ -93,7 +96,7 @@ class Message extends Model
                     'role' => $user->role ?? null,
                 ];
             }
-            
+
             // Try pelanggans table
             $pelanggan = Pelanggan::find($this->receiver_id);
             if ($pelanggan) {
@@ -104,8 +107,20 @@ class Message extends Model
                     'role' => 'pelanggan',
                 ];
             }
-            
+
             return null;
         });
+    }
+
+    /**
+     * Get media URL accessor
+     */
+    public function getMediaUrlAttribute()
+    {
+        if ($this->media_path) {
+            // Use relative path that works on any domain
+            return '/storage/' . $this->media_path;
+        }
+        return null;
     }
 }

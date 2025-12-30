@@ -1,9 +1,11 @@
 @use('Illuminate\Support\Facades\Auth')
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-visual">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-visual">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -23,6 +25,7 @@
                 opacity: 0;
                 transform: translateY(10px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -30,8 +33,15 @@
         }
 
         @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.7;
+            }
         }
 
         html {
@@ -261,28 +271,29 @@
 
         .chat-input-form {
             display: flex;
-            gap: 10px;
+            gap: 8px;
             align-items: flex-end;
         }
 
         .input-wrapper {
             flex: 1;
+            max-width: calc(100% - 54px);
             position: relative;
             background: #2a3942;
             border-radius: 24px;
             display: flex;
             align-items: center;
-            padding: 0 10px;
-            min-height: 46px;
+            padding: 0 8px;
+            min-height: 42px;
             box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
         .emoji-button {
             background: none;
             border: none;
-            font-size: 22px;
+            font-size: 20px;
             cursor: pointer;
-            padding: 8px;
+            padding: 6px;
             color: #8696a0;
             transition: all 0.2s;
             flex-shrink: 0;
@@ -295,31 +306,89 @@
 
         .chat-input {
             flex: 1;
-            padding: 12px 10px;
+            padding: 10px 8px;
             border: none;
             background: transparent;
-            font-size: 15px;
+            font-size: 14.5px;
             outline: none;
             color: #e9edef;
             font-family: inherit;
             resize: none;
             max-height: 100px;
             overflow-y: auto;
+            min-width: 0;
         }
 
         .chat-input::placeholder {
             color: #8696a0;
         }
 
+        .attach-button {
+            background: transparent;
+            color: #8696a0;
+            border: none;
+            cursor: pointer;
+            font-size: 18px;
+            padding: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            flex-shrink: 0;
+            border-radius: 50%;
+        }
+
+        .attach-button:hover {
+            color: #e9edef;
+            transform: scale(1.1);
+        }
+
+        .attach-button:active {
+            transform: scale(0.95);
+        }
+
+        .media-preview-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            position: relative;
+        }
+
+        .remove-media-btn {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            width: 20px;
+            height: 20px;
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .media-filename {
+            font-size: 12px;
+            color: #8696a0;
+            max-width: 150px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
         .send-button {
-            width: 46px;
-            height: 46px;
+            width: 42px;
+            height: 42px;
             background: linear-gradient(135deg, #00a884 0%, #00d9a8 100%);
             color: #ffffff;
             border: none;
             border-radius: 50%;
             cursor: pointer;
-            font-size: 18px;
+            font-size: 16px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -393,34 +462,36 @@
             .chat-input-container {
                 border-radius: 0 0 12px 12px;
             }
+
+            .input-wrapper {
+                max-width: calc(100% - 50px);
+            }
         }
 
-.back-button {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: transparent;
-    color: #8696a0;
-    text-decoration: none;
-    transition: all 0.3s ease;
-    flex-shrink: 0;
-    font-size: 18px;
-}
+        .back-button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: transparent;
+            color: #8696a0;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+            font-size: 18px;
+        }
 
-.back-button:hover {
-    background: rgba(255, 255, 255, 0.05);
-    color: #00a884;
-    transform: scale(1.1);
-}
+        .back-button:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: #00a884;
+            transform: scale(1.1);
+        }
 
-.back-button:active {
-    transform: scale(0.95);
-}
-
-
+        .back-button:active {
+            transform: scale(0.95);
+        }
 
         /* Desktop styles */
         @media (min-width: 768px) {
@@ -442,15 +513,20 @@
             .bottom-nav {
                 position: relative;
             }
+
+            .input-wrapper {
+                max-width: calc(100% - 60px);
+            }
         }
     </style>
 </head>
+
 <body>
     <div class="chat-container">
         <div class="chat-header">
-<a href="{{ url('https://layanan.jernih.net.id/dashboard/customer/tagihan/home') }}" class="back-button">
-        <i class="fas fa-arrow-left"></i>
-    </a>
+            <a href="{{ url('https://layanan.jernih.net.id/dashboard/customer/tagihan/home') }}" class="back-button">
+                <i class="fas fa-arrow-left"></i>
+            </a>
             <div class="header-avatar">
                 <i class="fas fa-user-shield"></i>
             </div>
@@ -458,11 +534,11 @@
                 <h1>Chat dengan Admin</h1>
                 <div class="user-status">
                     <span class="status-dot"></span>
-                   @php
-    $auth = Auth::user() ?? Auth::guard('customer')->user();
-@endphp
+                    @php
+                        $auth = Auth::user() ?? Auth::guard('customer')->user();
+                    @endphp
 
-<span>{{ $auth->name ?? $auth->nama_lengkap ?? 'Customer' }}</span>
+                    <span>{{ $auth->name ?? $auth->nama_lengkap ?? 'Customer' }}</span>
                 </div>
             </div>
         </div>
@@ -481,18 +557,19 @@
         </div>
 
         <div class="chat-input-container" id="chatInputContainer">
-            <form class="chat-input-form" id="chatForm">
+            <div id="mediaPreview"
+                style="display: none; padding: 8px 12px; background: #1a2530; border-radius: 8px; margin-bottom: 8px;">
+            </div>
+            <form class="chat-input-form" id="chatForm" enctype="multipart/form-data">
                 @csrf
+                <input type="file" id="mediaInput" accept="image/*,video/*" style="display: none;">
                 <div class="input-wrapper">
-                    <button type="button" class="emoji-button"></button>
-                    <input
-                        type="text"
-                        class="chat-input"
-                        id="messageInput"
-                        placeholder="Tulis pesan"
-                        autocomplete="off"
-                        required
-                    >
+                    <button type="button" class="emoji-button">😊</button>
+                    <input type="text" class="chat-input" id="messageInput" placeholder="Tulis pesan"
+                        autocomplete="off">
+                    <button type="button" class="attach-button" id="attachButton" title="Kirim foto/video">
+                        <i class="fas fa-paperclip"></i>
+                    </button>
                 </div>
                 <button type="submit" class="send-button" id="sendButton">
                     <i class="fas fa-paper-plane"></i>
@@ -533,7 +610,7 @@
         let isAtBottom = true;
 
         if (chatMessages) {
-            chatMessages.addEventListener('scroll', function() {
+            chatMessages.addEventListener('scroll', function () {
                 const threshold = 50;
                 const position = chatMessages.scrollHeight - chatMessages.scrollTop - chatMessages.clientHeight;
                 isAtBottom = position < threshold;
@@ -603,7 +680,7 @@
         else if (window.innerWidth < 768) {
             let originalHeight = window.innerHeight;
 
-            window.addEventListener('resize', function() {
+            window.addEventListener('resize', function () {
                 const currentHeight = window.innerHeight;
                 const diff = originalHeight - currentHeight;
 
@@ -630,7 +707,7 @@
             });
 
             // Handle focus/blur for fallback
-            messageInput.addEventListener('focus', function() {
+            messageInput.addEventListener('focus', function () {
                 if (bottomNav) {
                     bottomNav.classList.add('hidden');
                 }
@@ -638,7 +715,7 @@
                 setTimeout(() => scrollToBottom(true), 300);
             });
 
-            messageInput.addEventListener('blur', function() {
+            messageInput.addEventListener('blur', function () {
                 setTimeout(() => {
                     if (bottomNav) {
                         bottomNav.classList.remove('hidden');
@@ -648,14 +725,14 @@
         }
 
         // Prevent iOS bounce scroll on body
-        document.body.addEventListener('touchmove', function(e) {
+        document.body.addEventListener('touchmove', function (e) {
             if (e.target === document.body) {
                 e.preventDefault();
             }
         }, { passive: false });
 
         // Initial scroll to bottom on page load
-        window.addEventListener('load', function() {
+        window.addEventListener('load', function () {
             setTimeout(() => {
                 scrollToBottom(false);
             }, 100);
@@ -665,4 +742,5 @@
     @vite(['resources/js/bootstrap.js', 'resources/js/echo.js', 'resources/js/chat.js'])
 
 </body>
+
 </html>

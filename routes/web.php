@@ -615,3 +615,7 @@ Route::get('/pelanggan/export', [PelangganController::class, 'exportExcel']);
 
 Route::get('/dashboard/admin/pelanggan/search', [TagihanController::class, 'searchPelanggan'])
     ->name('pelanggan.search');
+
+
+
+Route::get('tagihan/export', [TagihanController::class, 'export'])->name('tagihan.bayar.export'); 
